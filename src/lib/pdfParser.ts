@@ -3,13 +3,19 @@ import { SK_INFO } from './constants';
 
 // Client-side PDF Parser for SK documents
 export async function parsePdfSK(file: File): Promise<{ success: boolean; data: SKMahasantri[]; error?: string }> {
+  if (typeof window === 'undefined') {
+    return { success: false, data: [], error: 'Hanya bisa dijalankan di browser.' };
+  }
+
   try {
     const arrayBuffer = await file.arrayBuffer();
 
     // Dynamically import pdfjs-dist
     const pdfjsLib = await import('pdfjs-dist');
     // Configure worker
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+    if (pdfjsLib.GlobalWorkerOptions) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version || '3.11.174'}/build/pdf.worker.min.js`;
+    }
 
     const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
     const pdf = await loadingTask.promise;

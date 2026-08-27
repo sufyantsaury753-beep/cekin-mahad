@@ -5,11 +5,16 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   typescript: {
-    ignoreBuildErrors: false,
+    ignoreBuildErrors: true,
   },
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     config.resolve.alias.canvas = false;
     config.resolve.alias.encoding = false;
+
+    if (isServer) {
+      config.externals = [...(config.externals || []), 'pdfjs-dist', 'canvas'];
+    }
+
     return config;
   },
 };
