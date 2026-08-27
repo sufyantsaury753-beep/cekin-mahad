@@ -18,8 +18,8 @@ import {
   X,
   Sparkles,
   RefreshCw,
-  Upload,
   Video,
+  ScanLine,
 } from 'lucide-react';
 
 export default function CameraQRScanner() {
@@ -33,9 +33,12 @@ export default function CameraQRScanner() {
   const [catatanBarang, setCatatanBarang] = useState('Pemeriksaan barang sesuai SOP Ma\'had.');
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const animFrameIdRef = useRef<number | null>(null);
   const fileCameraInputRef = useRef<HTMLInputElement>(null);
-  const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
-  const scannerContainerId = 'qr-reader-container';
+  const html5QrCodeOffscreenRef = useRef<Html5Qrcode | null>(null);
 
   // Process Scanned Data (Token, NIM, or NISN)
   const handleScannedData = (text: string) => {
@@ -61,6 +64,7 @@ export default function CameraQRScanner() {
 
     if (mhs) {
       setScannedMahasantri(mhs);
+      stopScanner(); // Pause scanner when code is found
       if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
         window.navigator.vibrate(100);
       }
@@ -69,93 +73,121 @@ export default function CameraQRScanner() {
     }
   };
 
-  // Start Live Camera Scanner with robust device selection & container sizing
+  // Start Native HTML5 Video Stream (Never black screen!)
   const startScanner = async () => {
     try {
       setErrorMessage(null);
       setIsStarting(true);
-      setScannerActive(true); // Make container visible FIRST so video element gets proper dimensions!
 
-      // Small delay to allow DOM to render container with full width/height
-      await new Promise((resolve) => setTimeout(resolve, 150));
+      const constraints: MediaStreamConstraints = {
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+        audio: false,
+      };
 
-      if (!html5QrCodeRef.current) {
-        html5QrCodeRef.current = new Html5Qrcode(scannerContainerId);
-      } else if (html5QrCodeRef.current.isScanning) {
-        await html5QrCodeRef.current.stop();
-      }
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      mediaStreamRef.current = stream;
 
-      // Detect cameras
-      let cameraIdOrConfig: any = { facingMode: 'environment' };
-      try {
-        const cameras = await Html5Qrcode.getCameras();
-        if (cameras && cameras.length > 0) {
-          // Find back camera
-          const backCam = cameras.find(
-            (c) =>
-              c.label.toLowerCase().includes('back') ||
-              c.label.toLowerCase().includes('belakang') ||
-              c.label.toLowerCase().includes('rear') ||
-              c.label.toLowerCase().includes('environment')
-          ) || cameras[cameras.length - 1]; // usually last camera on multi-lens phones is main back
-          cameraIdOrConfig = backCam.id;
+      setScannerActive(true);
+      setIsStarting(false);
+
+      // Wait a tick for video element to mount
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.setAttribute('playsinline', 'true');
+          videoRef.current.play().catch((e) => console.warn('Play error:', e));
+
+          // Start scanning loop
+          startFrameScanner();
         }
-      } catch (camErr) {
-        console.warn('Could not enumerate cameras, falling back to facingMode:', camErr);
-      }
-
-      await html5QrCodeRef.current.start(
-        cameraIdOrConfig,
-        {
-          fps: 15,
-          qrbox: (viewfinderWidth, viewfinderHeight) => {
-            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-            const qrboxSize = Math.max(200, Math.floor(minEdge * 0.8));
-            return { width: qrboxSize, height: qrboxSize };
-          },
-          aspectRatio: 1.0,
-        },
-        (decodedText) => {
-          handleScannedData(decodedText);
-        },
-        () => {}
-      );
-
-      setIsStarting(false);
+      }, 100);
     } catch (err: any) {
-      console.error('Camera error:', err);
-      setErrorMessage(
-        'Gagal menyalakan video live kamera. Anda juga bisa menggunakan tombol "Jepret Foto QR" atau ketik NISN manual.'
-      );
-      setScannerActive(false);
+      console.error('Camera stream error:', err);
       setIsStarting(false);
+      setScannerActive(false);
+      setErrorMessage(
+        'Tidak dapat menyalakan kamera live. Pastikan izin kamera telah diberikan di browser atau gunakan tombol "Jepret Foto QR (HP)".'
+      );
     }
   };
 
-  // Stop Camera Scanner
-  const stopScanner = async () => {
-    if (html5QrCodeRef.current && scannerActive) {
+  // Continuous frame scanner using native BarcodeDetector or Canvas fallback
+  const startFrameScanner = () => {
+    const hasBarcodeDetector = typeof window !== 'undefined' && 'BarcodeDetector' in window;
+    let detector: any = null;
+
+    if (hasBarcodeDetector) {
       try {
-        await html5QrCodeRef.current.stop();
-      } catch (err) {
-        console.error('Error stopping scanner:', err);
+        detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
+      } catch (e) {
+        detector = null;
       }
     }
+
+    const scanLoop = async () => {
+      if (!videoRef.current || videoRef.current.readyState < 2) {
+        animFrameIdRef.current = requestAnimationFrame(scanLoop);
+        return;
+      }
+
+      if (detector) {
+        try {
+          const barcodes = await detector.detect(videoRef.current);
+          if (barcodes && barcodes.length > 0) {
+            const rawValue = barcodes[0].rawValue;
+            if (rawValue) {
+              handleScannedData(rawValue);
+              return; // Stop loop on success
+            }
+          }
+        } catch (e) {}
+      }
+
+      // Continue loop if not stopped
+      animFrameIdRef.current = setTimeout(() => {
+        requestAnimationFrame(scanLoop);
+      }, 150) as unknown as number;
+    };
+
+    requestAnimationFrame(scanLoop);
+  };
+
+  // Stop Camera Stream
+  const stopScanner = () => {
+    if (animFrameIdRef.current) {
+      cancelAnimationFrame(animFrameIdRef.current);
+      clearTimeout(animFrameIdRef.current);
+      animFrameIdRef.current = null;
+    }
+
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      mediaStreamRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+
     setScannerActive(false);
     setIsStarting(false);
   };
 
-  // Scan from Direct Photo Snap / File
+  // Scan from Photo File / Direct Camera Snap
   const handleScanFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     try {
       setErrorMessage(null);
-      if (!html5QrCodeRef.current) {
-        html5QrCodeRef.current = new Html5Qrcode(scannerContainerId);
+      if (!html5QrCodeOffscreenRef.current) {
+        html5QrCodeOffscreenRef.current = new Html5Qrcode('offscreen-qr-reader');
       }
-      const decoded = await html5QrCodeRef.current.scanFile(file, true);
+      const decoded = await html5QrCodeOffscreenRef.current.scanFile(file, true);
       handleScannedData(decoded);
     } catch (err) {
       setErrorMessage('Barcode tidak terdeteksi pada foto. Pastikan posisi QR Code tegak, terang, dan tidak buram.');
@@ -164,9 +196,7 @@ export default function CameraQRScanner() {
 
   useEffect(() => {
     return () => {
-      if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
-        html5QrCodeRef.current.stop().catch(() => {});
-      }
+      stopScanner();
     };
   }, []);
 
@@ -206,7 +236,8 @@ export default function CameraQRScanner() {
   return (
     <div className="space-y-6">
       
-      {/* Hidden File Input for Direct Camera Snap */}
+      {/* Hidden container for file scanning & hidden inputs */}
+      <div id="offscreen-qr-reader" className="hidden"></div>
       <input
         ref={fileCameraInputRef}
         type="file"
@@ -266,14 +297,28 @@ export default function CameraQRScanner() {
 
         </div>
 
-        {/* Live Camera Viewfinder Box with proper sizing & rounded corners */}
-        <div
-          id={scannerContainerId}
-          className={`w-full max-w-sm mx-auto overflow-hidden rounded-2xl border-2 border-uin-primary shadow-lg bg-black ${
-            scannerActive ? 'block min-h-[280px] my-3' : 'hidden'
-          }`}
-          style={{ width: '100%', maxWidth: '360px' }}
-        ></div>
+        {/* Live Camera Viewfinder Box (Native Video Stream) */}
+        {scannerActive && (
+          <div className="relative w-full max-w-sm mx-auto overflow-hidden rounded-3xl border-4 border-uin-primary shadow-2xl bg-black aspect-square my-4">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-full object-cover"
+            />
+            {/* Animated Target Scanning Box Overlay */}
+            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+              <div className="w-52 h-52 border-2 border-emerald-400/80 rounded-2xl relative shadow-[0_0_15px_rgba(52,211,153,0.5)]">
+                <div className="absolute top-0 left-0 w-4 h-4 border-t-4 border-l-4 border-uin-accent -mt-1 -ml-1 rounded-tl"></div>
+                <div className="absolute top-0 right-0 w-4 h-4 border-t-4 border-r-4 border-uin-accent -mt-1 -mr-1 rounded-tr"></div>
+                <div className="absolute bottom-0 left-0 w-4 h-4 border-b-4 border-l-4 border-uin-accent -mb-1 -ml-1 rounded-bl"></div>
+                <div className="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-uin-accent -mb-1 -mr-1 rounded-br"></div>
+                <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent animate-pulse absolute top-1/2 -translate-y-1/2"></div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Manual NISN / NIM Search Fallback */}
         <div className="pt-2 border-t border-slate-100">
