@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { MahadStore } from '@/lib/store';
 import { Mahasantri } from '@/lib/types';
@@ -8,10 +8,10 @@ import BoardingPassCard from '@/components/ticket/BoardingPassCard';
 import Link from 'next/link';
 import { ArrowLeft, AlertCircle, BedDouble } from 'lucide-react';
 
-export default function DetailTiketPage() {
+function DetailTiketContent() {
   const params = useParams();
   const router = useRouter();
-  const nimNisn = params?.nim as string;
+  const nimNisn = (params?.nim as string) || '';
 
   const [mahasantri, setMahasantri] = useState<Mahasantri | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,7 +26,7 @@ export default function DetailTiketPage() {
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto py-20 text-center text-slate-500">
+      <div className="max-w-2xl mx-auto py-20 text-center text-slate-500 text-sm">
         Memuat E-Tiket Mahasantri...
       </div>
     );
@@ -63,20 +63,37 @@ export default function DetailTiketPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       
+      {/* Back Button */}
       <div className="flex items-center justify-between no-print">
-        <Link
-          href="/tiket"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-uin-primary"
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-900 bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-sm"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Cari Tiket Lain</span>
-        </Link>
+          <span>Kembali</span>
+        </button>
 
-        <span className="text-xs text-slate-400 font-mono">ID Tiket: {mahasantri.id}</span>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/tiket"
+            className="text-xs text-slate-500 hover:text-slate-800 font-semibold"
+          >
+            Cari E-Tiket Lain
+          </Link>
+        </div>
       </div>
 
+      {/* Boarding Pass Ticket Card */}
       <BoardingPassCard mahasantri={mahasantri} />
 
     </div>
+  );
+}
+
+export default function DetailTiketPage() {
+  return (
+    <Suspense fallback={<div className="max-w-2xl mx-auto py-20 text-center text-slate-500 text-sm">Memuat Halaman Tiket...</div>}>
+      <DetailTiketContent />
+    </Suspense>
   );
 }
