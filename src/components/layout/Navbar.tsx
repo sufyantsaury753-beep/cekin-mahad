@@ -43,14 +43,55 @@ export default function Navbar() {
     router.push('/login');
   };
 
-  // Base navigation links
-  const navLinks = [
-    { href: '/', label: 'Beranda', icon: Home },
-    { href: '/daftar', label: 'Pilih Kamar', icon: BedDouble },
-    { href: '/tiket', label: 'E-Tiket', icon: QrCode },
-    { href: '/scanner', label: 'Scanner Lorong', icon: QrCode, highlight: true },
-    { href: '/admin', label: 'Admin SK', icon: ShieldCheck },
-  ];
+  // Determine navigation links based on user role
+  const getNavLinks = () => {
+    if (!session) {
+      // Guest / Belum Login
+      return [
+        { href: '/', label: 'Beranda', icon: Home },
+        { href: '/daftar', label: 'Pilih Kamar', icon: BedDouble },
+        { href: '/tiket', label: 'Cek E-Tiket', icon: QrCode },
+      ];
+    }
+
+    if (session.role === 'MAHASANTRI') {
+      // Mahasantri View: Hanya fitur santri (Pilih Kamar & E-Tiket)
+      return [
+        { href: '/', label: 'Beranda', icon: Home },
+        { href: '/daftar', label: 'Pilih Kamar & Formulir', icon: BedDouble },
+        { href: '/tiket', label: 'E-Tiket Saya', icon: QrCode },
+      ];
+    }
+
+    if (session.role === 'PENGURUS') {
+      // Pengurus View: Hanya scanner lorong & cek tiket
+      return [
+        { href: '/', label: 'Beranda', icon: Home },
+        {
+          href: '/scanner',
+          label: `Scanner Lorong ${session.floorAssigned ? `(Lt. ${session.floorAssigned})` : ''}`,
+          icon: QrCode,
+          highlight: true,
+        },
+        { href: '/tiket', label: 'Pencarian E-Tiket', icon: QrCode },
+      ];
+    }
+
+    if (session.role === 'ADMIN') {
+      // Superadmin View: Semua fitur termasuk Dashboard Admin SK
+      return [
+        { href: '/', label: 'Beranda', icon: Home },
+        { href: '/admin', label: 'Dashboard Admin SK', icon: ShieldCheck, highlight: true },
+        { href: '/scanner', label: 'Scanner Lorong', icon: QrCode },
+        { href: '/daftar', label: 'Formulir Kamar', icon: BedDouble },
+        { href: '/tiket', label: 'Rekap E-Tiket', icon: QrCode },
+      ];
+    }
+
+    return [{ href: '/', label: 'Beranda', icon: Home }];
+  };
+
+  const navLinks = getNavLinks();
 
   return (
     <header className="sticky top-0 z-50 bg-uin-dark/95 backdrop-blur text-white border-b border-uin-primary/40 shadow-lg no-print">
@@ -75,7 +116,7 @@ export default function Navbar() {
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation (Filtered by Role) */}
           <nav className="hidden lg:flex items-center gap-1">
             {navLinks.map((link) => {
               const Icon = link.icon;

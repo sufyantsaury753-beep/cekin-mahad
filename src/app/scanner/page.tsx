@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import CameraQRScanner from '@/components/scanner/CameraQRScanner';
 import { MahadStore } from '@/lib/store';
 import { CheckInLog, Mahasantri } from '@/lib/types';
+import RoleGuard from '@/components/auth/RoleGuard';
 import {
   ShieldCheck,
   Building2,
@@ -15,6 +16,14 @@ import {
 } from 'lucide-react';
 
 export default function ScannerPage() {
+  return (
+    <RoleGuard allowedRoles={['PENGURUS', 'ADMIN']} pageTitle="Portal Scanner Pengurus Lorong">
+      <ScannerPageContent />
+    </RoleGuard>
+  );
+}
+
+function ScannerPageContent() {
   const [logs, setLogs] = useState<CheckInLog[]>([]);
   const [mhsList, setMhsList] = useState<Mahasantri[]>([]);
 

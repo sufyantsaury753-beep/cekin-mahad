@@ -5,6 +5,7 @@ import { MahadStore } from '@/lib/store';
 import { Kamar, Mahasantri, CheckInLog, SKMahasantri, Gender, JenisPendaftaran } from '@/lib/types';
 import { FAKULTAS_LIST, SK_INFO } from '@/lib/constants';
 import SKUploadModal from '@/components/admin/SKUploadModal';
+import RoleGuard from '@/components/auth/RoleGuard';
 import {
   ShieldCheck,
   Building2,
@@ -26,6 +27,14 @@ import {
 } from 'lucide-react';
 
 export default function AdminPage() {
+  return (
+    <RoleGuard allowedRoles={['ADMIN']} pageTitle="Dashboard Superadmin SK">
+      <AdminDashboardContent />
+    </RoleGuard>
+  );
+}
+
+function AdminDashboardContent() {
   const [rooms, setRooms] = useState<Kamar[]>(() => (typeof window !== 'undefined' ? MahadStore.getRooms() : []));
   const [mhsList, setMhsList] = useState<Mahasantri[]>(() => (typeof window !== 'undefined' ? MahadStore.getMahasantriList() : []));
   const [skList, setSkList] = useState<SKMahasantri[]>(() => (typeof window !== 'undefined' ? MahadStore.getSKList() : []));

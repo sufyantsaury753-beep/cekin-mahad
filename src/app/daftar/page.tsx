@@ -6,6 +6,8 @@ import { MahadStore } from '@/lib/store';
 import { Kamar, Gender, SKMahasantri, JenisPendaftaran } from '@/lib/types';
 import { FAKULTAS_LIST, SK_INFO } from '@/lib/constants';
 import FloorPlanVisualizer from '@/components/room/FloorPlanVisualizer';
+import RoleGuard from '@/components/auth/RoleGuard';
+import { MahadAuth } from '@/lib/store';
 import {
   User,
   BedDouble,
@@ -27,6 +29,14 @@ import {
 } from 'lucide-react';
 
 export default function DaftarPage() {
+  return (
+    <RoleGuard allowedRoles={['MAHASANTRI', 'ADMIN']} pageTitle="Formulir Pemilihan Kamar Mahasantri">
+      <DaftarPageContent />
+    </RoleGuard>
+  );
+}
+
+function DaftarPageContent() {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [rooms, setRooms] = useState<Kamar[]>([]);
@@ -116,6 +126,24 @@ export default function DaftarPage() {
     setRooms(MahadStore.getRooms());
     const handleRoomUpdate = () => setRooms(MahadStore.getRooms());
     window.addEventListener('mahad_rooms_updated', handleRoomUpdate);
+
+    // Auto verify if logged-in mahasantri
+    const session = MahadAuth.getSession();
+    if (session && session.role === 'MAHASANTRI' && session.skData) {
+      setNimNisn(session.skData.nimNisn);
+      setSkVerified(session.skData);
+      setNama(session.skData.nama);
+      setFakultas(session.skData.fakultas);
+      setJurusan(session.skData.jurusan);
+      setJenisKelamin(session.skData.jenisKelamin);
+      setJenisPendaftaran(session.skData.jenisPendaftaran);
+      setIsInternasional(session.skData.isInternasional);
+      setAsalNegara(session.skData.asalNegara);
+      if (session.skData.noWaRegistered) {
+        setNoWa(session.skData.noWaRegistered);
+      }
+    }
+
     return () => window.removeEventListener('mahad_rooms_updated', handleRoomUpdate);
   }, []);
 

@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { MahadStore } from '@/lib/store';
-import { Kamar, Mahasantri } from '@/lib/types';
+import { MahadStore, MahadAuth } from '@/lib/store';
+import { Kamar, Mahasantri, UserSession } from '@/lib/types';
 import { SK_INFO } from '@/lib/constants';
 import {
   BedDouble,
@@ -18,25 +18,32 @@ import {
   MapPin,
   FileCheck,
   Phone,
+  LogIn,
+  KeyRound,
 } from 'lucide-react';
 
 export default function HomePage() {
   const [rooms, setRooms] = useState<Kamar[]>([]);
   const [mhsList, setMhsList] = useState<Mahasantri[]>([]);
+  const [session, setSession] = useState<UserSession | null>(null);
 
   useEffect(() => {
     setRooms(MahadStore.getRooms());
     setMhsList(MahadStore.getMahasantriList());
+    setSession(MahadAuth.getSession());
 
     const handleRoomUpdate = () => setRooms(MahadStore.getRooms());
     const handleMhsUpdate = () => setMhsList(MahadStore.getMahasantriList());
+    const handleAuthUpdate = () => setSession(MahadAuth.getSession());
 
     window.addEventListener('mahad_rooms_updated', handleRoomUpdate);
     window.addEventListener('mahad_mhs_updated', handleMhsUpdate);
+    window.addEventListener('mahad_auth_changed', handleAuthUpdate);
 
     return () => {
       window.removeEventListener('mahad_rooms_updated', handleRoomUpdate);
       window.removeEventListener('mahad_mhs_updated', handleMhsUpdate);
+      window.removeEventListener('mahad_auth_changed', handleAuthUpdate);
     };
   }, []);
 
@@ -70,24 +77,92 @@ export default function HomePage() {
             Mahasantri Baru (berbasis <strong>NISN</strong>), Perpanjangan (berbasis <strong>NIM</strong>), dan Internasional yang lulus SK dapat langsung memilih kamar dan mengunduh <strong>E-Tiket Barcode</strong>.
           </p>
 
-          {/* Quick Action CTAs */}
+          {/* Role-Aware Quick Action CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Link
-              href="/daftar"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-uin-accent text-slate-950 font-bold text-base rounded-2xl hover:bg-amber-300 shadow-xl transition-all transform hover:-translate-y-0.5"
-            >
-              <BedDouble className="w-5 h-5" />
-              <span>Verifikasi NISN/NIM &amp; Pilih Kamar</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            
+            {/* 1. Pengurus View */}
+            {session?.role === 'PENGURUS' && (
+              <>
+                <Link
+                  href="/scanner"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-uin-accent text-slate-950 font-bold text-base rounded-2xl hover:bg-amber-300 shadow-xl transition-all transform hover:-translate-y-0.5"
+                >
+                  <QrCode className="w-5 h-5 text-slate-900" />
+                  <span>Buka Scanner Kamera Lantai {session.floorAssigned || ''}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link
+                  href="/tiket"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-4 bg-white/10 hover:bg-white/20 text-white font-semibold text-base rounded-2xl border border-white/25 backdrop-blur transition-all"
+                >
+                  <span>Cari Data E-Tiket Mahasantri</span>
+                </Link>
+              </>
+            )}
 
-            <Link
-              href="/tiket"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-4 bg-white/10 hover:bg-white/20 text-white font-semibold text-base rounded-2xl border border-white/25 backdrop-blur transition-all"
-            >
-              <QrCode className="w-5 h-5 text-emerald-300" />
-              <span>Cek E-Tiket Saya</span>
-            </Link>
+            {/* 2. Admin View */}
+            {session?.role === 'ADMIN' && (
+              <>
+                <Link
+                  href="/admin"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-uin-accent text-slate-950 font-bold text-base rounded-2xl hover:bg-amber-300 shadow-xl transition-all transform hover:-translate-y-0.5"
+                >
+                  <ShieldCheck className="w-5 h-5" />
+                  <span>Buka Dashboard Superadmin SK</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link
+                  href="/scanner"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-4 bg-emerald-700/80 hover:bg-emerald-600 text-white font-semibold text-base rounded-2xl border border-white/25 backdrop-blur transition-all"
+                >
+                  <QrCode className="w-5 h-5 text-emerald-300" />
+                  <span>Scanner Lorong</span>
+                </Link>
+              </>
+            )}
+
+            {/* 3. Mahasantri View */}
+            {session?.role === 'MAHASANTRI' && (
+              <>
+                <Link
+                  href="/daftar"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-uin-accent text-slate-950 font-bold text-base rounded-2xl hover:bg-amber-300 shadow-xl transition-all transform hover:-translate-y-0.5"
+                >
+                  <BedDouble className="w-5 h-5" />
+                  <span>Pilih Kamar &amp; Ranjang Saya</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link
+                  href="/tiket"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-4 bg-white/10 hover:bg-white/20 text-white font-semibold text-base rounded-2xl border border-white/25 backdrop-blur transition-all"
+                >
+                  <QrCode className="w-5 h-5 text-emerald-300" />
+                  <span>Lihat E-Tiket Saya</span>
+                </Link>
+              </>
+            )}
+
+            {/* 4. Guest / Belum Login View */}
+            {!session && (
+              <>
+                <Link
+                  href="/login"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-uin-accent text-slate-950 font-bold text-base rounded-2xl hover:bg-amber-300 shadow-xl transition-all transform hover:-translate-y-0.5"
+                >
+                  <LogIn className="w-5 h-5" />
+                  <span>Masuk Akun / Aktivasi PIN Santri</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link
+                  href="/daftar"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-4 bg-white/10 hover:bg-white/20 text-white font-semibold text-base rounded-2xl border border-white/25 backdrop-blur transition-all"
+                >
+                  <BedDouble className="w-5 h-5 text-emerald-300" />
+                  <span>Pilih Kamar</span>
+                </Link>
+              </>
+            )}
+
           </div>
 
           {/* Live Occupancy Metric Bar */}
@@ -133,9 +208,9 @@ export default function HomePage() {
             <div className="w-12 h-12 rounded-xl bg-emerald-100 text-uin-primary flex items-center justify-center font-bold text-lg">
               1
             </div>
-            <h3 className="font-bold text-lg text-slate-800">Cek NISN / NIM &amp; Pilih Kamar</h3>
+            <h3 className="font-bold text-lg text-slate-800">Aktivasi PIN &amp; Pilih Kamar</h3>
             <p className="text-sm text-slate-600 leading-relaxed">
-              Mahasantri memasukkan NISN (Maba) atau NIM (Lama) yang otomatis terverifikasi dengan data SK resmi, lalu memilih posisi ranjang di lantai yang diinginkan.
+              Mahasantri mengamankan akun dengan PIN 6-digit rahasia, lalu memilih posisi kamar dan ranjang secara visual dari rumah.
             </p>
           </div>
 
@@ -145,7 +220,7 @@ export default function HomePage() {
             </div>
             <h3 className="font-bold text-lg text-slate-800">Dapatkan E-Tiket &amp; Barcode</h3>
             <p className="text-sm text-slate-600 leading-relaxed">
-              Sistem langsung menerbitkan kartu check-in digital lengkap dengan QR Code terenkripsi yang dapat disimpan di galeri smartphone atau dicetak PDF.
+              Sistem langsung menerbitkan kartu check-in digital lengkap dengan QR Code dan pas foto resmi yang tersimpan aman di smartphone.
             </p>
           </div>
 
@@ -199,20 +274,54 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Quick Officer Access Box */}
+            {/* Quick Access Box based on role */}
             <div className="bg-white/10 backdrop-blur rounded-2xl p-6 border border-white/20 space-y-4 text-center">
-              <ShieldCheck className="w-10 h-10 text-uin-accent mx-auto" />
-              <h4 className="font-bold text-lg text-white">Petugas Pengurus Lantai?</h4>
-              <p className="text-xs text-slate-300">
-                Gunakan menu Scanner di HP untuk memindai QR E-Tiket mahasantri di lorong kamar Anda saat Hari-H kedatangan.
-              </p>
-              <Link
-                href="/scanner"
-                className="inline-flex items-center justify-center gap-2 w-full px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-xl shadow transition-all"
-              >
-                <QrCode className="w-4 h-4" />
-                <span>Buka Scanner Kamera Hari-H</span>
-              </Link>
+              {session?.role === 'PENGURUS' ? (
+                <>
+                  <QrCode className="w-10 h-10 text-uin-accent mx-auto" />
+                  <h4 className="font-bold text-lg text-white">Scanner Pengurus Lantai {session.floorAssigned}</h4>
+                  <p className="text-xs text-slate-300">
+                    Gunakan menu Scanner di HP untuk memindai QR E-Tiket mahasantri di lorong lantai Anda.
+                  </p>
+                  <Link
+                    href="/scanner"
+                    className="inline-flex items-center justify-center gap-2 w-full px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-xl shadow transition-all"
+                  >
+                    <QrCode className="w-4 h-4" />
+                    <span>Buka Scanner Kamera Sekarang</span>
+                  </Link>
+                </>
+              ) : session?.role === 'ADMIN' ? (
+                <>
+                  <ShieldCheck className="w-10 h-10 text-uin-accent mx-auto" />
+                  <h4 className="font-bold text-lg text-white">Panel Kontrol Superadmin</h4>
+                  <p className="text-xs text-slate-300">
+                    Kelola data SK Mahasantri, upload PDF lampiran, dan atur kuncian kamar lantai.
+                  </p>
+                  <Link
+                    href="/admin"
+                    className="inline-flex items-center justify-center gap-2 w-full px-5 py-3 bg-uin-accent text-slate-950 font-bold text-sm rounded-xl shadow transition-all"
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Buka Dashboard Superadmin</span>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <KeyRound className="w-10 h-10 text-uin-accent mx-auto" />
+                  <h4 className="font-bold text-lg text-white">Punya Akun Petugas atau Admin?</h4>
+                  <p className="text-xs text-slate-300">
+                    Pengurus Lorong Lantai dan Admin dapat masuk menggunakan akun resmi untuk mengakses alat scanner dan dasbor.
+                  </p>
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center justify-center gap-2 w-full px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-xl shadow transition-all"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    <span>Halaman Masuk Petugas / Admin</span>
+                  </Link>
+                </>
+              )}
             </div>
 
           </div>
