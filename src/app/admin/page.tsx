@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { MahadStore } from '@/lib/store';
 import { Kamar, Mahasantri, CheckInLog, SKMahasantri, Gender, JenisPendaftaran } from '@/lib/types';
 import { FAKULTAS_LIST, SK_INFO } from '@/lib/constants';
+import SKUploadModal from '@/components/admin/SKUploadModal';
 import {
   ShieldCheck,
   Building2,
@@ -21,6 +22,7 @@ import {
   Plus,
   UserCheck,
   FileText,
+  FileUp,
 } from 'lucide-react';
 
 export default function AdminPage() {
@@ -36,6 +38,9 @@ export default function AdminPage() {
   const [filterFloor, setFilterFloor] = useState<number | 'ALL'>('ALL');
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'REGISTERED' | 'CHECKED_IN'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Upload SK Modal State
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
   // Add SK Form Modal/State
   const [newNimNisn, setNewNimNisn] = useState('');
@@ -512,13 +517,23 @@ export default function AdminPage() {
                 </p>
               </div>
 
-              <button
-                onClick={() => setShowAddSkModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-uin-primary hover:bg-uin-secondary text-white font-bold text-xs rounded-xl shadow transition-all shrink-0"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Tambah Mahasantri Baru ke SK</span>
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => setShowUploadModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition-all shrink-0"
+                >
+                  <FileUp className="w-4 h-4" />
+                  <span>Unggah PDF / File SK</span>
+                </button>
+
+                <button
+                  onClick={() => setShowAddSkModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-uin-primary hover:bg-uin-secondary text-white font-bold text-xs rounded-xl shadow transition-all shrink-0"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Tambah Manual</span>
+                </button>
+              </div>
             </div>
 
             {/* Table of SK Whitelist */}
@@ -720,6 +735,17 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+
+      {/* Modal Upload File SK PDF / CSV */}
+      <SKUploadModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onSuccess={(count) => {
+          setNotification(`Berhasil mengimpor ${count} data mahasantri dari dokumen SK!`);
+          loadData();
+          setTimeout(() => setNotification(null), 4000);
+        }}
+      />
 
     </div>
   );

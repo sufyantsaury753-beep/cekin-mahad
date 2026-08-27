@@ -20,6 +20,10 @@ import {
   ShieldCheck,
   Search,
   Lock,
+  Camera,
+  Upload,
+  ImageIcon,
+  RefreshCw,
 } from 'lucide-react';
 
 export default function DaftarPage() {
@@ -33,6 +37,7 @@ export default function DaftarPage() {
   const [isVerifying, setIsVerifying] = useState(false);
 
   // Form State
+  const photoInputRef = React.useRef<HTMLInputElement>(null);
   const [nama, setNama] = useState('');
   const [jenisKelamin, setJenisKelamin] = useState<Gender>('L');
   const [jenisPendaftaran, setJenisPendaftaran] = useState<JenisPendaftaran>('Calon Mahasantri Baru');
@@ -46,6 +51,29 @@ export default function DaftarPage() {
   const [pasFotoUrl, setPasFotoUrl] = useState(
     'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'
   );
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setErrorMessage('File yang diunggah harus berupa gambar (JPG, PNG, WEBP).');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMessage('Ukuran foto maksimal 5 MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setPasFotoUrl(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Room Selection State
   const [selectedKamar, setSelectedKamar] = useState<Kamar | null>(null);
@@ -314,6 +342,57 @@ export default function DaftarPage() {
                   <p className="text-xs text-emerald-800">
                     Jalur: <strong>{skVerified.jenisPendaftaran}</strong> &bull; Fakultas/Jurusan: <strong>{skVerified.jurusan} ({skVerified.fakultas})</strong>
                   </p>
+                </div>
+              </div>
+
+              {/* Pas Foto Diri Upload Box */}
+              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-center gap-5">
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  className="hidden"
+                />
+
+                <div className="relative group shrink-0">
+                  <div className="w-24 h-32 rounded-2xl overflow-hidden bg-slate-200 border-2 border-uin-primary/40 shadow-sm flex items-center justify-center">
+                    {pasFotoUrl ? (
+                      <img src={pasFotoUrl} alt="Pas Foto" className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-10 h-10 text-slate-400" />
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => photoInputRef.current?.click()}
+                    className="absolute inset-0 bg-black/40 hover:bg-black/50 text-white rounded-2xl flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold"
+                  >
+                    <Camera className="w-5 h-5 mb-1" />
+                    <span>Ganti Foto</span>
+                  </button>
+                </div>
+
+                <div className="space-y-2 text-center sm:text-left flex-1">
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                    <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                      Pas Foto Diri (Formal / Rapi)
+                    </span>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> Foto Terpasang
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Foto ini akan otomatis tercetak di <strong>E-Tiket Barcode</strong> dan diverifikasi oleh Mudabbir / Pengurus Lorong saat Hari-H kedatangan.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => photoInputRef.current?.click()}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white border border-slate-300 hover:border-uin-primary text-slate-700 text-xs font-semibold rounded-xl shadow-sm transition-all"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-uin-primary" />
+                    <span>Unggah / Ambil Foto Baru</span>
+                  </button>
                 </div>
               </div>
 
