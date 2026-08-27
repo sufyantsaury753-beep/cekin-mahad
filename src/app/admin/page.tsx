@@ -26,10 +26,10 @@ import {
 } from 'lucide-react';
 
 export default function AdminPage() {
-  const [rooms, setRooms] = useState<Kamar[]>([]);
-  const [mhsList, setMhsList] = useState<Mahasantri[]>([]);
-  const [skList, setSkList] = useState<SKMahasantri[]>([]);
-  const [logs, setLogs] = useState<CheckInLog[]>([]);
+  const [rooms, setRooms] = useState<Kamar[]>(() => (typeof window !== 'undefined' ? MahadStore.getRooms() : []));
+  const [mhsList, setMhsList] = useState<Mahasantri[]>(() => (typeof window !== 'undefined' ? MahadStore.getMahasantriList() : []));
+  const [skList, setSkList] = useState<SKMahasantri[]>(() => (typeof window !== 'undefined' ? MahadStore.getSKList() : []));
+  const [logs, setLogs] = useState<CheckInLog[]>(() => (typeof window !== 'undefined' ? MahadStore.getLogs() : []));
 
   // Active Admin Tab
   const [activeTab, setActiveTab] = useState<'MONITORING' | 'SK_MASTER'>('MONITORING');
@@ -313,7 +313,7 @@ export default function AdminPage() {
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-1">
               <span className="text-xs text-slate-500 font-medium">Mahasantri Memilih Kamar</span>
               <div className="text-2xl font-bold text-uin-primary font-mono">{totalRegistered} Orang</div>
-              <span className="text-[11px] text-slate-400">{Math.round((totalRegistered / totalBeds) * 100)}% Okupansi Terisi</span>
+              <span className="text-[11px] text-slate-400">{totalBeds > 0 ? Math.round((totalRegistered / totalBeds) * 100) : 0}% Okupansi Terisi</span>
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-1">
