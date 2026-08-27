@@ -39,6 +39,11 @@ export default function AdminPage() {
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'REGISTERED' | 'CHECKED_IN'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // SK Master Data Search & Filters
+  const [skSearchQuery, setSkSearchQuery] = useState('');
+  const [skFilterBooking, setSkFilterBooking] = useState<'ALL' | 'BOOKED' | 'UNBOOKED'>('ALL');
+  const [skFilterJenis, setSkFilterJenis] = useState<'ALL' | 'MABA' | 'PERPANJANGAN' | 'INTERNASIONAL'>('ALL');
+
   // Upload SK Modal State
   const [showUploadModal, setShowUploadModal] = useState(false);
 
@@ -90,6 +95,35 @@ export default function AdminPage() {
       m.nimNisn.includes(searchQuery) ||
       m.nomorKamar.includes(searchQuery);
     return matchFloor && matchStatus && matchQuery;
+  });
+
+  // Filtered SK Whitelist
+  const filteredSkList = skList.filter((item) => {
+    const booking = mhsList.find(
+      (m) => m.nimNisn.trim().toLowerCase() === item.nimNisn.trim().toLowerCase()
+    );
+
+    const q = skSearchQuery.toLowerCase().trim();
+    const matchQuery =
+      !q ||
+      item.nama.toLowerCase().includes(q) ||
+      item.nimNisn.toLowerCase().includes(q) ||
+      item.jurusan.toLowerCase().includes(q) ||
+      item.fakultas.toLowerCase().includes(q) ||
+      (item.asalNegara && item.asalNegara.toLowerCase().includes(q));
+
+    const matchBooking =
+      skFilterBooking === 'ALL' ||
+      (skFilterBooking === 'BOOKED' && Boolean(booking)) ||
+      (skFilterBooking === 'UNBOOKED' && !booking);
+
+    const matchJenis =
+      skFilterJenis === 'ALL' ||
+      (skFilterJenis === 'MABA' && item.jenisPendaftaran === 'Calon Mahasantri Baru') ||
+      (skFilterJenis === 'PERPANJANGAN' && item.jenisPendaftaran === 'Perpanjangan') ||
+      (skFilterJenis === 'INTERNASIONAL' && item.isInternasional);
+
+    return matchQuery && matchBooking && matchJenis;
   });
 
   // Calculate Statistics
@@ -536,6 +570,75 @@ export default function AdminPage() {
               </div>
             </div>
 
+            {/* Search & Filter Toolbar for SK Master Data */}
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Ketik Nama Mahasantri, NISN, NIM, atau Jurusan..."
+                  value={skSearchQuery}
+                  onChange={(e) => setSkSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-uin-primary/30 outline-none"
+                />
+                {skSearchQuery && (
+                  <button
+                    onClick={() => setSkSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs font-bold"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  value={skFilterBooking}
+                  onChange={(e) => setSkFilterBooking(e.target.value as any)}
+                  className="px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-uin-primary/30 outline-none"
+                >
+                  <option value="ALL">Semua Status Kamar</option>
+                  <option value="BOOKED">✅ Sudah Memilih Kamar</option>
+                  <option value="UNBOOKED">⏳ Belum Memilih Kamar</option>
+                </select>
+
+                <select
+                  value={skFilterJenis}
+                  onChange={(e) => setSkFilterJenis(e.target.value as any)}
+                  className="px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-uin-primary/30 outline-none"
+                >
+                  <option value="ALL">Semua Kategori</option>
+                  <option value="MABA">Calon Maba (NISN)</option>
+                  <option value="PERPANJANGAN">Perpanjangan (NIM)</option>
+                  <option value="INTERNASIONAL">Internasional</option>
+                </select>
+
+                {(skSearchQuery || skFilterBooking !== 'ALL' || skFilterJenis !== 'ALL') && (
+                  <button
+                    onClick={() => {
+                      setSkSearchQuery('');
+                      setSkFilterBooking('ALL');
+                      setSkFilterJenis('ALL');
+                    }}
+                    className="px-3 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-semibold transition-all"
+                  >
+                    Reset Filter
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Counter Summary */}
+            <div className="flex items-center justify-between text-xs text-slate-500 px-1">
+              <span>
+                Menampilkan <strong>{filteredSkList.length}</strong> dari <strong>{skList.length}</strong> mahasantri SK
+              </span>
+              <span className="text-[11px]">
+                {filteredSkList.filter((item) => mhsList.some((m) => m.nimNisn === item.nimNisn)).length} telah booking &bull;{' '}
+                {filteredSkList.filter((item) => !mhsList.some((m) => m.nimNisn === item.nimNisn)).length} belum booking
+              </span>
+            </div>
+
             {/* Table of SK Whitelist */}
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs text-slate-600">
@@ -550,48 +653,56 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {skList.map((item, idx) => {
-                    const booking = mhsList.find(
-                      (m) => m.nimNisn.trim().toLowerCase() === item.nimNisn.trim().toLowerCase()
-                    );
-                    return (
-                      <tr key={item.nimNisn + idx} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="p-3 font-mono text-slate-400">{item.no || idx + 1}</td>
-                        <td className="p-3 font-mono font-bold text-slate-900">{item.nimNisn}</td>
-                        <td className="p-3 font-bold text-slate-800">
-                          <div className="flex items-center gap-1.5">
-                            <span>{item.nama}</span>
-                            {item.isInternasional && (
-                              <span className="text-[9px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">
-                                {item.asalNegara || 'Internasional'}
+                  {filteredSkList.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-slate-400">
+                        Tidak ditemukan nama mahasantri dengan kata kunci "<strong>{skSearchQuery}</strong>".
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredSkList.map((item, idx) => {
+                      const booking = mhsList.find(
+                        (m) => m.nimNisn.trim().toLowerCase() === item.nimNisn.trim().toLowerCase()
+                      );
+                      return (
+                        <tr key={item.nimNisn + idx} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="p-3 font-mono text-slate-400">{item.no || idx + 1}</td>
+                          <td className="p-3 font-mono font-bold text-slate-900">{item.nimNisn}</td>
+                          <td className="p-3 font-bold text-slate-800">
+                            <div className="flex items-center gap-1.5">
+                              <span>{item.nama}</span>
+                              {item.isInternasional && (
+                                <span className="text-[9px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">
+                                  {item.asalNegara || 'Internasional'}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium">
+                              {item.jenisPendaftaran}
+                            </span>
+                          </td>
+                          <td className="p-3 text-slate-600">
+                            {item.jurusan} ({item.fakultas})
+                          </td>
+                          <td className="p-3">
+                            {booking ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                                <CheckCircle className="w-3.5 h-3.5" />
+                                Kamar {booking.nomorKamar} (Bed {booking.bedNumber})
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
+                                <Clock className="w-3.5 h-3.5" />
+                                Belum Memilih Kamar
                               </span>
                             )}
-                          </div>
-                        </td>
-                        <td className="p-3">
-                          <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium">
-                            {item.jenisPendaftaran}
-                          </span>
-                        </td>
-                        <td className="p-3 text-slate-600">
-                          {item.jurusan} ({item.fakultas})
-                        </td>
-                        <td className="p-3">
-                          {booking ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                              <CheckCircle className="w-3.5 h-3.5" />
-                              Kamar {booking.nomorKamar} (Bed {booking.bedNumber})
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
-                              <Clock className="w-3.5 h-3.5" />
-                              Belum Memilih Kamar
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
