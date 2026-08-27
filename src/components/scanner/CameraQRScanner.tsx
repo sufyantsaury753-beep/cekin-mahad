@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { MahadStore } from '@/lib/store';
 import { Mahasantri } from '@/lib/types';
-import { ATURAN_BARANG } from '@/lib/constants';
+import { ATURAN_BARANG, SK_INFO } from '@/lib/constants';
 import confetti from 'canvas-confetti';
 import {
   Camera,
@@ -26,8 +26,8 @@ export default function CameraQRScanner() {
   const [scannedMahasantri, setScannedMahasantri] = useState<Mahasantri | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [petugasNama, setPetugasNama] = useState('Ustadz Pengurus Lantai 5');
-  const [catatanBarang, setCatatanBarang] = useState('Barang bawaan aman sesuai SOP Ma`had.');
+  const [petugasNama, setPetugasNama] = useState('Ustadz Pengurus Lantai');
+  const [catatanBarang, setCatatanBarang] = useState('Pemeriksaan barang sesuai SOP Ma\'had.');
   const [isProcessing, setIsProcessing] = useState(false);
 
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
@@ -60,7 +60,7 @@ export default function CameraQRScanner() {
     } catch (err: any) {
       console.error('Camera error:', err);
       setErrorMessage(
-        'Tidak dapat mengakses kamera. Pastikan izin kamera telah diberikan atau gunakan opsi pencarian manual di bawah.'
+        'Tidak dapat mengakses kamera. Pastikan izin kamera telah diberikan atau gunakan opsi pencarian manual NISN/NIM di bawah.'
       );
       setScannerActive(false);
     }
@@ -86,34 +86,33 @@ export default function CameraQRScanner() {
     };
   }, []);
 
-  // Process Scanned Data (Token or NIM)
+  // Process Scanned Data (Token, NIM, or NISN)
   const handleScannedData = (text: string) => {
     setErrorMessage(null);
     setSuccessMessage(null);
 
-    // Try finding by QR token or NIM
+    // Try finding by QR token or NIM/NISN
     let mhs = MahadStore.getMahasantriByQr(text);
     if (!mhs) {
-      mhs = MahadStore.getMahasantriByNim(text);
+      mhs = MahadStore.getMahasantriByNimNisn(text);
     }
 
-    // Also check if text has format QR-MAHAD-{nim}-...
+    // Also check if text has format QR-MAHAD-{nimNisn}-...
     if (!mhs && text.includes('QR-MAHAD-')) {
       const parts = text.split('-');
       if (parts.length >= 3) {
-        const nim = parts[2];
-        mhs = MahadStore.getMahasantriByNim(nim);
+        const idQuery = parts[2];
+        mhs = MahadStore.getMahasantriByNimNisn(idQuery);
       }
     }
 
     if (mhs) {
       setScannedMahasantri(mhs);
-      // Play brief vibration feedback if supported
       if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
         window.navigator.vibrate(100);
       }
     } else {
-      setErrorMessage(`Data QR / Barcode tidak dikenali: "${text}". Pastikan kode berasal dari sistem Ma'had.`);
+      setErrorMessage(`Data QR / Barcode tidak dikenali: "${text}". Pastikan kode berasal dari sistem resmi Ma'had.`);
     }
   };
 
@@ -130,7 +129,7 @@ export default function CameraQRScanner() {
     setIsProcessing(true);
 
     const result = MahadStore.confirmCheckIn(
-      scannedMahasantri.nim,
+      scannedMahasantri.nimNisn,
       petugasNama,
       catatanBarang
     );
@@ -162,7 +161,7 @@ export default function CameraQRScanner() {
               Scanner Kamera E-Checkin Pengurus
             </h2>
             <p className="text-xs text-slate-500">
-              Arahkan kamera HP ke E-Tiket Mahasantri yang datang ke lorong lantai Anda.
+              Arahkan kamera HP ke E-Tiket Mahasantri saat tiba di lorong lantai Anda (Jadwal: {SK_INFO.jadwal}).
             </p>
           </div>
 
@@ -197,17 +196,17 @@ export default function CameraQRScanner() {
           }`}
         ></div>
 
-        {/* Manual NIM / QR Search Fallback */}
+        {/* Manual NISN / NIM Search Fallback */}
         <div className="pt-2">
           <form onSubmit={handleManualSearch} className="flex gap-2">
             <div className="relative flex-1">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Atau ketik NIM / Token Barcode manual..."
+                placeholder="Atau ketik NISN / NIM / Token Barcode manual..."
                 value={manualInput}
                 onChange={(e) => setManualInput(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-uin-primary/30"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-uin-primary/30 font-mono"
               />
             </div>
             <button
@@ -284,9 +283,14 @@ export default function CameraQRScanner() {
               </div>
 
               <div className="space-y-1">
-                <h4 className="font-bold text-base text-slate-900">{scannedMahasantri.nama}</h4>
-                <p className="text-xs font-mono font-bold text-emerald-800">NIM: {scannedMahasantri.nim}</p>
-                <p className="text-xs text-slate-600">{scannedMahasantri.prodi} &bull; {scannedMahasantri.fakultas}</p>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-bold text-base text-slate-900">{scannedMahasantri.nama}</h4>
+                  <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">
+                    {scannedMahasantri.jenisPendaftaran}
+                  </span>
+                </div>
+                <p className="text-xs font-mono font-bold text-emerald-800">NIM / NISN: {scannedMahasantri.nimNisn}</p>
+                <p className="text-xs text-slate-600">{scannedMahasantri.jurusan} &bull; {scannedMahasantri.fakultas}</p>
                 <p className="text-xs text-slate-500">WA: {scannedMahasantri.noWa} | Wali: {scannedMahasantri.namaWali} ({scannedMahasantri.noWaWali})</p>
               </div>
             </div>
@@ -299,7 +303,9 @@ export default function CameraQRScanner() {
                 Lantai {scannedMahasantri.lantai} &bull; Bed {scannedMahasantri.bedNumber}
               </div>
               <div className="text-[11px] text-emerald-100 pt-1">
-                {scannedMahasantri.jajaran === 'BELAKANG' ? 'Jajaran Belakang (513 - 516)' : 'Jajaran Depan (509 - 512)'}
+                {scannedMahasantri.jajaran === 'BELAKANG'
+                  ? `Jajaran Belakang (${scannedMahasantri.lantai}13 - ${scannedMahasantri.lantai}16)`
+                  : `Jajaran Depan (${scannedMahasantri.lantai}09 - ${scannedMahasantri.lantai}12)`}
               </div>
             </div>
 
@@ -309,7 +315,7 @@ export default function CameraQRScanner() {
           <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
             <h5 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
               <Sparkles className="w-4 h-4 text-amber-500" />
-              Pengecekan Barang Bawaan di Lorong Kamar
+              Pemeriksaan Barang Bawaan Sesuai SK ({SK_INFO.nomor})
             </h5>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600">
@@ -324,7 +330,7 @@ export default function CameraQRScanner() {
 
             <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">Nama Petugas Pengurus Lantai:</label>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">Nama Petugas Pengurus Lantai / Mudabbir:</label>
                 <input
                   type="text"
                   value={petugasNama}
@@ -333,7 +339,7 @@ export default function CameraQRScanner() {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">Catatan Pengecekan Barang:</label>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">Catatan Pengecekan Barang &amp; Berkas:</label>
                 <input
                   type="text"
                   value={catatanBarang}

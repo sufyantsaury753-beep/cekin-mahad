@@ -1,10 +1,10 @@
 import { Kamar, Mahasantri, CheckInLog, SKMahasantri } from './types';
 import { generateInitialRooms, INITIAL_MAHASANTRI, INITIAL_SK_LIST } from './constants';
 
-const ROOMS_KEY = 'mahad_rooms_v1';
-const MHS_KEY = 'mahad_mhs_v1';
-const LOGS_KEY = 'mahad_logs_v1';
-const SK_KEY = 'mahad_sk_v1';
+const ROOMS_KEY = 'mahad_rooms_v2';
+const MHS_KEY = 'mahad_mhs_v2';
+const LOGS_KEY = 'mahad_logs_v2';
+const SK_KEY = 'mahad_sk_v2';
 
 // Populate initial rooms with pre-existing mahasantri bookings
 function buildInitialRooms(): Kamar[] {
@@ -17,7 +17,7 @@ function buildInitialRooms(): Kamar[] {
       if (bed) {
         bed.isOccupied = true;
         bed.mahasantriId = mhs.id;
-        bed.mahasantriNim = mhs.nim;
+        bed.mahasantriNimNisn = mhs.nimNisn;
         bed.mahasantriNama = mhs.nama;
       }
     }
@@ -50,7 +50,9 @@ export const MahadStore = {
 
   addSKMahasantri(mhs: SKMahasantri) {
     const list = this.getSKList();
-    const existingIndex = list.findIndex((item) => item.nim.trim() === mhs.nim.trim());
+    const existingIndex = list.findIndex(
+      (item) => item.nimNisn.trim().toLowerCase() === mhs.nimNisn.trim().toLowerCase()
+    );
     if (existingIndex >= 0) {
       list[existingIndex] = mhs;
     } else {
@@ -62,7 +64,9 @@ export const MahadStore = {
   importSKList(newList: SKMahasantri[]) {
     const list = this.getSKList();
     newList.forEach((newItem) => {
-      const idx = list.findIndex((x) => x.nim.trim() === newItem.nim.trim());
+      const idx = list.findIndex(
+        (x) => x.nimNisn.trim().toLowerCase() === newItem.nimNisn.trim().toLowerCase()
+      );
       if (idx >= 0) {
         list[idx] = newItem;
       } else {
@@ -72,31 +76,33 @@ export const MahadStore = {
     this.saveSKList(list);
   },
 
-  checkSK(nim: string): { isAllowed: boolean; data?: SKMahasantri; alreadyRegistered?: Mahasantri; error?: string } {
-    const cleanNim = nim.trim();
-    if (!cleanNim) {
-      return { isAllowed: false, error: 'Silakan masukkan NIM Anda.' };
+  checkSK(
+    query: string
+  ): { isAllowed: boolean; data?: SKMahasantri; alreadyRegistered?: Mahasantri; error?: string } {
+    const clean = query.trim().toLowerCase();
+    if (!clean) {
+      return { isAllowed: false, error: 'Silakan masukkan NIM atau NISN Anda.' };
     }
 
     const skList = this.getSKList();
-    const skData = skList.find((x) => x.nim.toLowerCase() === cleanNim.toLowerCase());
+    const skData = skList.find((x) => x.nimNisn.toLowerCase() === clean);
 
     if (!skData) {
       return {
         isAllowed: false,
-        error: `⛔ AKSES DITOLAK: NIM "${cleanNim}" tidak terdaftar dalam SK Kelulusan/Penetapan Mahasantri Ma'had dari Rektor. Hanya mahasantri yang tercantum di SK yang berhak memilih kamar.`,
+        error: `⛔ AKSES DITOLAK: NIM / NISN "${query.trim()}" tidak terdaftar dalam SK Pengumuman Mahad No. B-092/Un.30/P.IV/KP.07.06/06/2026. Hanya nama yang tercantum di SK yang berhak memilih kamar.`,
       };
     }
 
     // Check if already registered
     const mhsList = this.getMahasantriList();
-    const existing = mhsList.find((x) => x.nim.toLowerCase() === cleanNim.toLowerCase());
+    const existing = mhsList.find((x) => x.nimNisn.toLowerCase() === clean);
     if (existing) {
       return {
         isAllowed: true,
         data: skData,
         alreadyRegistered: existing,
-        error: `NIM ${cleanNim} (${existing.nama}) sudah terdaftar di Kamar ${existing.nomorKamar} (Bed ${existing.bedNumber}).`,
+        error: `NIM/NISN ${query.trim()} (${existing.nama}) sudah terdaftar di Kamar ${existing.nomorKamar} (Bed ${existing.bedNumber}).`,
       };
     }
 
@@ -149,9 +155,9 @@ export const MahadStore = {
     window.dispatchEvent(new CustomEvent('mahad_mhs_updated', { detail: list }));
   },
 
-  getMahasantriByNim(nim: string): Mahasantri | undefined {
+  getMahasantriByNimNisn(nimNisn: string): Mahasantri | undefined {
     const list = this.getMahasantriList();
-    return list.find((m) => m.nim.trim().toLowerCase() === nim.trim().toLowerCase());
+    return list.find((m) => m.nimNisn.trim().toLowerCase() === nimNisn.trim().toLowerCase());
   },
 
   getMahasantriByQr(qrToken: string): Mahasantri | undefined {
@@ -160,12 +166,15 @@ export const MahadStore = {
   },
 
   bookRoom(
-    mhsData: Omit<Mahasantri, 'id' | 'kamarId' | 'nomorKamar' | 'lantai' | 'jajaran' | 'bedNumber' | 'statusCheckIn' | 'qrToken' | 'registeredAt'>,
+    mhsData: Omit<
+      Mahasantri,
+      'id' | 'kamarId' | 'nomorKamar' | 'lantai' | 'jajaran' | 'bedNumber' | 'statusCheckIn' | 'qrToken' | 'registeredAt'
+    >,
     kamarId: string,
     bedNumber: number
   ): { success: boolean; error?: string; mahasantri?: Mahasantri } {
     // 1. Double check SK validation
-    const skCheck = this.checkSK(mhsData.nim);
+    const skCheck = this.checkSK(mhsData.nimNisn);
     if (!skCheck.isAllowed) {
       return { success: false, error: skCheck.error };
     }
@@ -173,7 +182,7 @@ export const MahadStore = {
     if (skCheck.alreadyRegistered) {
       return {
         success: false,
-        error: `NIM ${mhsData.nim} sudah memilih Kamar ${skCheck.alreadyRegistered.nomorKamar} (Bed ${skCheck.alreadyRegistered.bedNumber}).`,
+        error: `NIM/NISN ${mhsData.nimNisn} sudah memilih Kamar ${skCheck.alreadyRegistered.nomorKamar} (Bed ${skCheck.alreadyRegistered.bedNumber}).`,
         mahasantri: skCheck.alreadyRegistered,
       };
     }
@@ -199,11 +208,14 @@ export const MahadStore = {
     }
 
     if (bed.isOccupied) {
-      return { success: false, error: `Ranjang ${bedNumber} di Kamar ${room.nomor} baru saja dipilih orang lain. Silakan pilih ranjang lain.` };
+      return {
+        success: false,
+        error: `Ranjang ${bedNumber} di Kamar ${room.nomor} baru saja dipilih orang lain. Silakan pilih ranjang lain.`,
+      };
     }
 
     const newMhsId = `MHS-${Date.now().toString().slice(-6)}`;
-    const qrToken = `QR-MAHAD-${mhsData.nim}-${room.nomor}-${bedNumber}`;
+    const qrToken = `QR-MAHAD-${mhsData.nimNisn}-${room.nomor}-${bedNumber}`;
 
     const newMahasantri: Mahasantri = {
       ...mhsData,
@@ -221,7 +233,7 @@ export const MahadStore = {
     // Update bed
     bed.isOccupied = true;
     bed.mahasantriId = newMhsId;
-    bed.mahasantriNim = mhsData.nim;
+    bed.mahasantriNimNisn = mhsData.nimNisn;
     bed.mahasantriNama = mhsData.nama;
 
     // Save changes
@@ -233,22 +245,26 @@ export const MahadStore = {
   },
 
   confirmCheckIn(
-    nim: string,
+    nimNisn: string,
     petugas: string,
     catatanBarang?: string
   ): { success: boolean; error?: string; mahasantri?: Mahasantri } {
     const mhsList = this.getMahasantriList();
-    const mhsIndex = mhsList.findIndex((m) => m.nim.trim().toLowerCase() === nim.trim().toLowerCase());
+    const mhsIndex = mhsList.findIndex(
+      (m) => m.nimNisn.trim().toLowerCase() === nimNisn.trim().toLowerCase()
+    );
 
     if (mhsIndex === -1) {
-      return { success: false, error: `Mahasantri dengan NIM ${nim} tidak ditemukan.` };
+      return { success: false, error: `Mahasantri dengan NIM/NISN ${nimNisn} tidak ditemukan.` };
     }
 
     const mhs = mhsList[mhsIndex];
     if (mhs.statusCheckIn === 'CHECKED_IN') {
       return {
         success: false,
-        error: `Mahasantri ${mhs.nama} (${mhs.nim}) SUDAH melakukan check-in sebelumnya pada ${new Date(mhs.checkInTimestamp || '').toLocaleString('id-ID')} oleh ${mhs.checkedInBy}.`,
+        error: `Mahasantri ${mhs.nama} (${mhs.nimNisn}) SUDAH melakukan check-in sebelumnya pada ${new Date(
+          mhs.checkInTimestamp || ''
+        ).toLocaleString('id-ID')} oleh ${mhs.checkedInBy}.`,
         mahasantri: mhs,
       };
     }
@@ -264,7 +280,7 @@ export const MahadStore = {
     // Save log
     const log: CheckInLog = {
       id: `LOG-${Date.now()}`,
-      nim: mhs.nim,
+      nimNisn: mhs.nimNisn,
       nama: mhs.nama,
       nomorKamar: mhs.nomorKamar,
       bedNumber: mhs.bedNumber,

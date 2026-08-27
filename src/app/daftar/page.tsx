@@ -3,10 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { MahadStore } from '@/lib/store';
-import { Kamar, Gender, SKMahasantri } from '@/lib/types';
-import { FAKULTAS_LIST } from '@/lib/constants';
+import { Kamar, Gender, SKMahasantri, JenisPendaftaran } from '@/lib/types';
+import { FAKULTAS_LIST, SK_INFO } from '@/lib/constants';
 import FloorPlanVisualizer from '@/components/room/FloorPlanVisualizer';
-import Link from 'next/link';
 import {
   User,
   BedDouble,
@@ -28,16 +27,18 @@ export default function DaftarPage() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [rooms, setRooms] = useState<Kamar[]>([]);
 
-  // NIM & SK Verification State
-  const [nim, setNim] = useState('');
+  // NIM / NISN & SK Verification State
+  const [nimNisn, setNimNisn] = useState('');
   const [skVerified, setSkVerified] = useState<SKMahasantri | null>(null);
-  const [isVerifyingNim, setIsVerifyingNim] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   // Form State
   const [nama, setNama] = useState('');
   const [jenisKelamin, setJenisKelamin] = useState<Gender>('L');
+  const [jenisPendaftaran, setJenisPendaftaran] = useState<JenisPendaftaran>('Calon Mahasantri Baru');
   const [fakultas, setFakultas] = useState(FAKULTAS_LIST[0]);
-  const [prodi, setProdi] = useState('');
+  const [jurusan, setJurusan] = useState('');
+  const [asalNegara, setAsalNegara] = useState<string | undefined>(undefined);
   const [noWa, setNoWa] = useState('');
   const [namaWali, setNamaWali] = useState('');
   const [noWaWali, setNoWaWali] = useState('');
@@ -61,40 +62,41 @@ export default function DaftarPage() {
     return () => window.removeEventListener('mahad_rooms_updated', handleRoomUpdate);
   }, []);
 
-  // Handle Verify NIM with SK
-  const handleVerifyNIM = () => {
+  // Handle Verify NIM / NISN with SK
+  const handleVerifyNIMNISN = () => {
     setErrorMessage(null);
     setSkVerified(null);
 
-    if (!nim.trim()) {
-      setErrorMessage('Silakan masukkan NIM Anda terlebih dahulu.');
+    if (!nimNisn.trim()) {
+      setErrorMessage('Silakan masukkan NIM atau NISN Anda terlebih dahulu.');
       return;
     }
 
-    setIsVerifyingNim(true);
-
-    const check = MahadStore.checkSK(nim.trim());
-    setIsVerifyingNim(false);
+    setIsVerifying(true);
+    const check = MahadStore.checkSK(nimNisn.trim());
+    setIsVerifying(false);
 
     if (!check.isAllowed || !check.data) {
-      setErrorMessage(check.error || 'NIM tidak terdaftar dalam SK Rektor.');
+      setErrorMessage(check.error || 'NIM / NISN tidak terdaftar dalam SK Pengumuman.');
       return;
     }
 
     if (check.alreadyRegistered) {
       setErrorMessage(
-        `NIM ${nim} (${check.alreadyRegistered.nama}) SUDAH memilih kamar sebelumnya (Kamar ${check.alreadyRegistered.nomorKamar} Bed ${check.alreadyRegistered.bedNumber}). Anda dapat langsung membuka E-Tiket Anda.`
+        `NIM/NISN ${nimNisn} (${check.alreadyRegistered.nama}) SUDAH memilih kamar sebelumnya (Kamar ${check.alreadyRegistered.nomorKamar} Bed ${check.alreadyRegistered.bedNumber}). Anda dapat langsung membuka E-Tiket Anda.`
       );
       return;
     }
 
-    // Successfully verified in SK Rektor!
+    // Successfully verified in SK!
     setSkVerified(check.data);
     setNama(check.data.nama);
     setFakultas(check.data.fakultas);
-    setProdi(check.data.prodi);
+    setJurusan(check.data.jurusan);
     setJenisKelamin(check.data.jenisKelamin);
+    setJenisPendaftaran(check.data.jenisPendaftaran);
     setIsInternasional(check.data.isInternasional);
+    setAsalNegara(check.data.asalNegara);
   };
 
   const handleSelectBed = (kamar: Kamar, bedNumber: number) => {
@@ -108,7 +110,7 @@ export default function DaftarPage() {
     setErrorMessage(null);
 
     if (!skVerified) {
-      setErrorMessage('Silakan verifikasi NIM Anda di SK Rektor terlebih dahulu.');
+      setErrorMessage('Silakan verifikasi NIM / NISN Anda di SK terlebih dahulu.');
       return;
     }
 
@@ -138,11 +140,13 @@ export default function DaftarPage() {
 
     const result = MahadStore.bookRoom(
       {
-        nim: nim.trim(),
+        nimNisn: nimNisn.trim(),
         nama: nama.trim(),
         jenisKelamin,
+        jenisPendaftaran,
         fakultas,
-        prodi,
+        jurusan,
+        asalNegara,
         noWa: noWa.trim(),
         namaWali: namaWali.trim() || 'Wali Mahasantri',
         noWaWali: noWaWali.trim() || '-',
@@ -156,7 +160,7 @@ export default function DaftarPage() {
     setIsSubmitting(false);
 
     if (result.success && result.mahasantri) {
-      router.push(`/tiket/${result.mahasantri.nim}`);
+      router.push(`/tiket/${result.mahasantri.nimNisn}`);
     } else {
       setErrorMessage(result.error || 'Terjadi kesalahan saat memproses pendaftaran.');
     }
@@ -169,13 +173,13 @@ export default function DaftarPage() {
       <div className="text-center space-y-2">
         <span className="text-xs font-bold uppercase tracking-wider text-uin-secondary flex items-center justify-center gap-1.5">
           <ShieldCheck className="w-4 h-4 text-uin-primary" />
-          Pendaftaran Resmi Berbasis SK Rektor
+          Pendaftaran Resmi SK No. {SK_INFO.nomor}
         </span>
         <h1 className="text-2xl sm:text-4xl font-serif font-bold text-slate-800">
           Formulir Check-In Mahasantri Mandiri
         </h1>
         <p className="text-sm text-slate-500 max-w-xl mx-auto">
-          Hanya mahasantri yang tercantum dalam SK Penetapan Rektor yang dapat memilih kamar dan menerbitkan E-Tiket Barcode.
+          Gunakan <strong>NISN</strong> (untuk Calon Mahasantri Baru) atau <strong>NIM</strong> (untuk Perpanjangan) sesuai yang tercantum di Surat Keputusan.
         </p>
       </div>
 
@@ -192,7 +196,7 @@ export default function DaftarPage() {
             >
               1
             </div>
-            <span className="text-[11px] font-semibold text-slate-600 mt-1">Cek SK &amp; Data</span>
+            <span className="text-[11px] font-semibold text-slate-600 mt-1">Cek NISN/NIM</span>
           </div>
 
           <div className={`flex-1 h-1 mx-2 transition-all ${step >= 2 ? 'bg-uin-primary' : 'bg-slate-200'}`}></div>
@@ -234,60 +238,64 @@ export default function DaftarPage() {
         </div>
       )}
 
-      {/* STEP 1: Verifikasi SK Rektor & Form Data */}
+      {/* STEP 1: Verifikasi SK & Form Data */}
       {step === 1 && (
         <form onSubmit={handleNextStep1} className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
           
           <div className="border-b border-slate-100 pb-4 flex items-center justify-between">
             <div className="flex items-center gap-2 text-slate-800 font-bold text-lg">
               <ShieldCheck className="w-5 h-5 text-uin-primary" />
-              <span>Langkah 1: Verifikasi NIM di SK Rektor &amp; Data Kontak</span>
+              <span>Langkah 1: Verifikasi NIM / NISN di Lampiran SK</span>
             </div>
-            <span className="text-xs text-slate-400">Whitelist Gatekeeper</span>
+            <span className="text-xs text-slate-400 font-mono">Gelombang 1 &bull; 2026/2027</span>
           </div>
 
-          {/* NIM Verification Box */}
+          {/* NIM / NISN Verification Box */}
           <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3">
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-              Nomor Induk Mahasiswa (NIM) Sesuai SK <span className="text-rose-500">*</span>
+              Masukkan NIM atau NISN Anda Sesuai SK <span className="text-rose-500">*</span>
             </label>
             <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
-                placeholder="Contoh: 2530311086 / 2381010001"
-                value={nim}
+                placeholder="Contoh NISN: 0067999651 atau NIM: 2530311086"
+                value={nimNisn}
                 onChange={(e) => {
-                  setNim(e.target.value);
+                  setNimNisn(e.target.value);
                   setSkVerified(null);
                 }}
                 className="flex-1 px-4 py-3 bg-white border border-slate-300 rounded-xl text-sm font-mono focus:ring-2 focus:ring-uin-primary/30 outline-none"
               />
               <button
                 type="button"
-                onClick={handleVerifyNIM}
-                disabled={isVerifyingNim}
+                onClick={handleVerifyNIMNISN}
+                disabled={isVerifying}
                 className="px-6 py-3 bg-uin-primary hover:bg-uin-secondary text-white font-bold text-xs sm:text-sm rounded-xl shadow transition-all flex items-center justify-center gap-2 shrink-0"
               >
                 <Search className="w-4 h-4" />
-                <span>{isVerifyingNim ? 'Memeriksa...' : 'Cek SK Rektor'}</span>
+                <span>{isVerifying ? 'Memeriksa...' : 'Cek Status di SK'}</span>
               </button>
             </div>
 
-            {/* Quick Demo NIM Hint */}
+            {/* Quick Demo NISN / NIM Hint */}
             <div className="text-[11px] text-slate-500 flex flex-wrap items-center gap-1.5 pt-1">
-              <span>NIM Contoh di SK:</span>
-              {['2530311086', '2381040112', '2381050144', '2381030089 (Int.)'].map((sample) => (
+              <span>Contoh di SK Asli:</span>
+              {[
+                { label: '0067999651 (Maba NISN)', val: '0067999651' },
+                { label: '0074324633 (Maba NISN)', val: '0074324633' },
+                { label: '2530311086 (Perpanjangan NIM)', val: '2530311086' },
+                { label: 'INT-PH-846 (Internasional Filipina)', val: 'INT-PH-846' },
+              ].map((sample) => (
                 <button
-                  key={sample}
+                  key={sample.val}
                   type="button"
                   onClick={() => {
-                    const clean = sample.split(' ')[0];
-                    setNim(clean);
+                    setNimNisn(sample.val);
                     setSkVerified(null);
                   }}
                   className="px-2 py-0.5 bg-white border border-slate-300 rounded text-slate-700 hover:bg-slate-100 font-mono text-[10px]"
                 >
-                  {sample}
+                  {sample.label}
                 </button>
               ))}
             </div>
@@ -301,10 +309,10 @@ export default function DaftarPage() {
                 <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0 mt-0.5" />
                 <div className="space-y-0.5">
                   <span className="font-bold text-sm block">
-                    NIM Terverifikasi Resmi dalam SK Rektor!
+                    NIM / NISN Terverifikasi Resmi di SK Mahad Al-Jami'ah!
                   </span>
                   <p className="text-xs text-emerald-800">
-                    Data nama dan program studi otomatis ditarik dari Master SK Mahasantri. Silakan lengkapi kontak WhatsApp di bawah.
+                    Jalur: <strong>{skVerified.jenisPendaftaran}</strong> &bull; Fakultas/Jurusan: <strong>{skVerified.jurusan} ({skVerified.fakultas})</strong>
                   </p>
                 </div>
               </div>
@@ -325,13 +333,13 @@ export default function DaftarPage() {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                    <span>Fakultas &amp; Program Studi (Sesuai SK)</span>
+                    <span>Jurusan &amp; Fakultas (Sesuai SK)</span>
                     <Lock className="w-3 h-3 text-slate-400" />
                   </label>
                   <input
                     type="text"
                     disabled
-                    value={`${prodi} (${fakultas})`}
+                    value={`${jurusan} - ${fakultas}`}
                     className="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 cursor-not-allowed"
                   />
                 </div>
@@ -378,9 +386,9 @@ export default function DaftarPage() {
 
                 <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-200">
                   <div className="space-y-0.5">
-                    <span className="text-xs font-bold text-slate-800 block">Kategori Mahasantri</span>
+                    <span className="text-xs font-bold text-slate-800 block">Kategori Pendaftaran</span>
                     <span className="text-[11px] text-slate-500">
-                      {isInternasional ? 'Mahasiswa Asing / Internasional (Bisa akses Lantai 2)' : 'Mahasantri Reguler Nasional'}
+                      {jenisPendaftaran} {asalNegara ? `(${asalNegara})` : ''}
                     </span>
                   </div>
                   {isInternasional && (
@@ -405,7 +413,7 @@ export default function DaftarPage() {
           ) : (
             <div className="p-8 text-center border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 text-xs space-y-2">
               <ShieldCheck className="w-8 h-8 text-slate-300 mx-auto" />
-              <p>Masukkan NIM Anda di atas dan klik tombol <strong>"Cek SK Rektor"</strong> untuk melanjutkan pendaftaran kamar.</p>
+              <p>Masukkan NISN atau NIM Anda di atas dan klik tombol <strong>"Cek Status di SK"</strong> untuk melanjutkan pendaftaran kamar.</p>
             </div>
           )}
 
@@ -476,20 +484,24 @@ export default function DaftarPage() {
             {/* Box Identitas */}
             <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3">
               <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                <User className="w-4 h-4 text-uin-primary" /> Identitas Mahasantri (SK Rektor)
+                <User className="w-4 h-4 text-uin-primary" /> Identitas Mahasantri (SK {SK_INFO.nomor})
               </h3>
               <div className="space-y-1.5 text-xs text-slate-700">
                 <div className="flex justify-between py-1 border-b border-slate-200/60">
-                  <span className="text-slate-500">NIM</span>
-                  <span className="font-bold font-mono">{nim}</span>
+                  <span className="text-slate-500">NIM / NISN</span>
+                  <span className="font-bold font-mono">{nimNisn}</span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-slate-200/60">
                   <span className="text-slate-500">Nama Lengkap</span>
                   <span className="font-bold">{nama}</span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-slate-200/60">
-                  <span className="text-slate-500">Fakultas / Prodi</span>
-                  <span className="font-medium text-right">{fakultas} &bull; {prodi}</span>
+                  <span className="text-slate-500">Fakultas / Jurusan</span>
+                  <span className="font-medium text-right">{jurusan} &bull; {fakultas}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-slate-200/60">
+                  <span className="text-slate-500">Jenis Pendaftaran</span>
+                  <span className="font-medium">{jenisPendaftaran}</span>
                 </div>
                 <div className="flex justify-between py-1">
                   <span className="text-slate-500">No. WhatsApp</span>
@@ -535,8 +547,8 @@ export default function DaftarPage() {
 
           {/* Petunjuk Hari-H */}
           <div className="bg-slate-100 p-4 rounded-2xl border border-slate-200 text-xs text-slate-600 space-y-1">
-            <span className="font-bold text-slate-800 block">Informasi Alur Check-In Hari-H:</span>
-            <p>Setelah menekan tombol di bawah, Anda akan memperoleh E-Tiket Digital ber-Barcode. Pada Hari-H, Anda dapat langsung berjalan menuju <strong className="text-slate-800">Lantai {selectedKamar.lantai} Kamar {selectedKamar.nomor}</strong> tanpa antre di lobi bawah.</p>
+            <span className="font-bold text-slate-800 block">Jadwal &amp; Alur Check-In Hari-H:</span>
+            <p>Jadwal masuk: <strong className="text-slate-800">19 – 21 Agustus 2026 (08.00–16.00 WIB)</strong>. Pada Hari-H, Anda dapat langsung berjalan menuju <strong className="text-slate-800">Lantai {selectedKamar.lantai} Kamar {selectedKamar.nomor}</strong> tanpa antre di lobi bawah.</p>
           </div>
 
           <div className="flex items-center justify-between pt-2">

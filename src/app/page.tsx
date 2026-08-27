@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { MahadStore } from '@/lib/store';
 import { Kamar, Mahasantri } from '@/lib/types';
+import { SK_INFO } from '@/lib/constants';
 import {
   BedDouble,
   QrCode,
@@ -16,6 +17,7 @@ import {
   Clock,
   MapPin,
   FileCheck,
+  Phone,
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -56,8 +58,8 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto text-center space-y-6 relative z-10">
           
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur border border-white/20 text-xs font-semibold text-uin-accent">
-            <Sparkles className="w-4 h-4" />
-            <span>Sistem E-Checkin &amp; Pemilihan Kamar Digital Terdistribusi</span>
+            <ShieldCheck className="w-4 h-4" />
+            <span>Pengumuman Resmi SK No: {SK_INFO.nomor}</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight font-serif text-white max-w-4xl mx-auto leading-tight sm:leading-tight">
@@ -65,7 +67,7 @@ export default function HomePage() {
           </h1>
 
           <p className="text-base sm:text-lg text-emerald-100 max-w-2xl mx-auto leading-relaxed">
-            Pilih kamar dan ranjang favoritmu dari rumah, dapatkan <strong>E-Tiket Barcode</strong>, dan langsung menuju ke kamar saat Hari-H tanpa perlu antre di lobi bawah.
+            Mahasantri Baru (berbasis <strong>NISN</strong>), Perpanjangan (berbasis <strong>NIM</strong>), dan Internasional yang lulus SK dapat langsung memilih kamar dan mengunduh <strong>E-Tiket Barcode</strong>.
           </p>
 
           {/* Quick Action CTAs */}
@@ -75,7 +77,7 @@ export default function HomePage() {
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-uin-accent text-slate-950 font-bold text-base rounded-2xl hover:bg-amber-300 shadow-xl transition-all transform hover:-translate-y-0.5"
             >
               <BedDouble className="w-5 h-5" />
-              <span>Pilih Kamar &amp; Daftar Sekarang</span>
+              <span>Verifikasi NISN/NIM &amp; Pilih Kamar</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
 
@@ -131,9 +133,9 @@ export default function HomePage() {
             <div className="w-12 h-12 rounded-xl bg-emerald-100 text-uin-primary flex items-center justify-center font-bold text-lg">
               1
             </div>
-            <h3 className="font-bold text-lg text-slate-800">Pilih Kamar dari Rumah</h3>
+            <h3 className="font-bold text-lg text-slate-800">Cek NISN / NIM &amp; Pilih Kamar</h3>
             <p className="text-sm text-slate-600 leading-relaxed">
-              Mahasantri mengisi identitas dan memilih lantai serta nomor ranjang (misal: Kamar 513 Bed 2 di Jajaran Belakang) secara mandiri.
+              Mahasantri memasukkan NISN (Maba) atau NIM (Lama) yang otomatis terverifikasi dengan data SK resmi, lalu memilih posisi ranjang di lantai yang diinginkan.
             </p>
           </div>
 
@@ -143,7 +145,7 @@ export default function HomePage() {
             </div>
             <h3 className="font-bold text-lg text-slate-800">Dapatkan E-Tiket &amp; Barcode</h3>
             <p className="text-sm text-slate-600 leading-relaxed">
-              Sistem langsung menerbitkan kartu check-in digital lengkap dengan QR Code terenkripsi yang dapat disimpan di galeri smartphone atau dicetak.
+              Sistem langsung menerbitkan kartu check-in digital lengkap dengan QR Code terenkripsi yang dapat disimpan di galeri smartphone atau dicetak PDF.
             </p>
           </div>
 
@@ -153,14 +155,14 @@ export default function HomePage() {
             </div>
             <h3 className="font-bold text-lg text-slate-800">Langsung ke Lantai &amp; Terima Kunci</h3>
             <p className="text-sm text-slate-600 leading-relaxed">
-              Pada Hari-H, mahasantri langsung berjalan menuju kamarnya. Pengurus lorong lantai men-scan barcode dan menyerahkan kunci dalam 30 detik.
+              Pada Hari-H (19–21 Agustus 2026), mahasantri langsung berjalan menuju kamarnya. Pengurus lorong lantai men-scan barcode dan menyerahkan kunci dalam 30 detik.
             </p>
           </div>
 
         </div>
       </section>
 
-      {/* Info Periode 3 Hari & Lokasi */}
+      {/* Info Periode 3 Hari Sesuai SK */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-gradient-to-r from-slate-900 to-uin-dark text-white rounded-3xl p-6 sm:p-10 border border-slate-800 shadow-xl">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
@@ -168,13 +170,13 @@ export default function HomePage() {
             <div className="space-y-4">
               <span className="text-xs font-bold uppercase tracking-wider text-uin-accent flex items-center gap-1.5">
                 <Clock className="w-4 h-4" />
-                Periode Check-In Fleksibel 3 Hari
+                Jadwal Resmi Check-In: {SK_INFO.jadwal}
               </span>
               <h3 className="text-2xl sm:text-3xl font-serif font-bold text-white leading-snug">
-                Datang Kapan Saja Sesuai Kenyamanan Perjalanan Anda
+                Ketentuan Kedatangan Berdasarkan SK Mahad
               </h3>
               <p className="text-sm text-slate-300 leading-relaxed">
-                Tidak ada batasan jam antrean kaku. Mahasantri dari luar kota dapat tiba kapan pun selama 3 hari periode check-in dibuka. Pengurus standby di lorong lantai masing-masing.
+                Check-in dibuka tanggal <strong>19 – 21 Agustus 2026</strong>. Mahasantri dari domisili jauh atau yang memiliki keperluan khusus diperkenankan check-in lebih awal dengan konfirmasi ke Helpdesk ({SK_INFO.contactPerson}).
               </p>
 
               <div className="space-y-2 pt-2 text-xs sm:text-sm text-emerald-200">
@@ -188,7 +190,11 @@ export default function HomePage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-uin-accent shrink-0" />
-                  <span>Lantai 2: Alokasi Khusus Mahasiswa Asing / Internasional</span>
+                  <span>Lantai 2: Alokasi Khusus Mahasantri Asing / Internasional</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-uin-accent shrink-0" />
+                  <span>Contact Person Ma'had: {SK_INFO.contactPerson}</span>
                 </div>
               </div>
             </div>
@@ -198,7 +204,7 @@ export default function HomePage() {
               <ShieldCheck className="w-10 h-10 text-uin-accent mx-auto" />
               <h4 className="font-bold text-lg text-white">Petugas Pengurus Lantai?</h4>
               <p className="text-xs text-slate-300">
-                Gunakan menu Scanner di HP untuk memindai QR E-Tiket mahasantri di lorong kamar Anda saat Hari-H.
+                Gunakan menu Scanner di HP untuk memindai QR E-Tiket mahasantri di lorong kamar Anda saat Hari-H kedatangan.
               </p>
               <Link
                 href="/scanner"

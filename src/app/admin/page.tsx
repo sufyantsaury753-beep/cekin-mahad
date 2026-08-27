@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { MahadStore } from '@/lib/store';
-import { Kamar, Mahasantri, CheckInLog, SKMahasantri, Gender } from '@/lib/types';
-import { FAKULTAS_LIST } from '@/lib/constants';
+import { Kamar, Mahasantri, CheckInLog, SKMahasantri, Gender, JenisPendaftaran } from '@/lib/types';
+import { FAKULTAS_LIST, SK_INFO } from '@/lib/constants';
 import {
   ShieldCheck,
   Building2,
@@ -38,12 +38,14 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Add SK Form Modal/State
-  const [newNim, setNewNim] = useState('');
+  const [newNimNisn, setNewNimNisn] = useState('');
   const [newNama, setNewNama] = useState('');
-  const [newFakultas, setNewFakultas] = useState(FAKULTAS_LIST[0]);
-  const [newProdi, setNewProdi] = useState('');
+  const [newJenis, setNewJenis] = useState<JenisPendaftaran>('Calon Mahasantri Baru');
+  const [newFakultas, setNewFakultas] = useState('FITK');
+  const [newJurusan, setNewJurusan] = useState('');
   const [newGender, setNewGender] = useState<Gender>('L');
   const [newIsInt, setNewIsInt] = useState(false);
+  const [newNegara, setNewNegara] = useState('');
   const [showAddSkModal, setShowAddSkModal] = useState(false);
 
   const [notification, setNotification] = useState<string | null>(null);
@@ -80,7 +82,7 @@ export default function AdminPage() {
     const matchQuery =
       !searchQuery ||
       m.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.nim.includes(searchQuery) ||
+      m.nimNisn.includes(searchQuery) ||
       m.nomorKamar.includes(searchQuery);
     return matchFloor && matchStatus && matchQuery;
   });
@@ -97,31 +99,35 @@ export default function AdminPage() {
   // Toggle Floor Lock (e.g. Lantai 2 International)
   const handleToggleFloorLock = (floor: number, currentlyLocked: boolean) => {
     const nextState = !currentlyLocked;
-    const reason = nextState ? (floor === 2 ? 'Khusus Mahasiswa Internasional' : `Lantai ${floor} dikunci Admin`) : undefined;
+    const reason = nextState ? (floor === 2 ? 'Khusus Mahasantri Internasional' : `Lantai ${floor} dikunci Admin`) : undefined;
     MahadStore.toggleFloorLock(floor, nextState, reason);
     setNotification(`Status kunci Lantai ${floor} berhasil diubah.`);
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // Add Student to SK Rektor Whitelist
+  // Add Student to SK Whitelist
   const handleAddSk = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newNim.trim() || !newNama.trim()) return;
+    if (!newNimNisn.trim() || !newNama.trim()) return;
 
     MahadStore.addSKMahasantri({
-      nim: newNim.trim(),
+      no: skList.length + 1,
+      nimNisn: newNimNisn.trim(),
       nama: newNama.trim(),
-      fakultas: newFakultas,
-      prodi: newProdi.trim() || 'Prodi Pilihan',
       jenisKelamin: newGender,
+      jenisPendaftaran: newJenis,
+      fakultas: newFakultas,
+      jurusan: newJurusan.trim() || 'PAI',
+      asalNegara: newIsInt ? (newNegara || 'Internasional') : undefined,
       isInternasional: newIsInt,
-      skNomor: 'SK-REKTOR/UINSSC/2026/089',
+      skNomor: SK_INFO.nomor,
     });
 
-    setNotification(`Mahasantri ${newNama} (NIM: ${newNim}) berhasil ditambahkan ke SK Rektor!`);
-    setNewNim('');
+    setNotification(`Mahasantri ${newNama} (NIM/NISN: ${newNimNisn}) berhasil ditambahkan ke SK.`);
+    setNewNimNisn('');
     setNewNama('');
-    setNewProdi('');
+    setNewJurusan('');
+    setNewNegara('');
     setShowAddSkModal(false);
     setTimeout(() => setNotification(null), 3500);
   };
@@ -129,10 +135,11 @@ export default function AdminPage() {
   // Export to CSV
   const handleExportCSV = () => {
     const headers = [
-      'NIM',
+      'NIM/NISN',
       'Nama Lengkap',
+      'Jenis Pendaftaran',
       'Fakultas',
-      'Prodi',
+      'Jurusan',
       'No WA',
       'Kamar',
       'Lantai',
@@ -146,16 +153,17 @@ export default function AdminPage() {
     ];
 
     const rows = mhsList.map((m) => [
-      `"${m.nim}"`,
+      `"${m.nimNisn}"`,
       `"${m.nama}"`,
+      `"${m.jenisPendaftaran}"`,
       `"${m.fakultas}"`,
-      `"${m.prodi}"`,
+      `"${m.jurusan}"`,
       `"${m.noWa}"`,
       `"${m.nomorKamar}"`,
       m.lantai,
       `"${m.jajaran}"`,
       m.bedNumber,
-      m.isInternasional ? 'Ya' : 'Tidak',
+      m.isInternasional ? `Ya (${m.asalNegara || '-'})` : 'Tidak',
       `"${m.statusCheckIn}"`,
       `"${m.checkInTimestamp || '-'}"`,
       `"${m.checkedInBy || '-'}"`,
@@ -166,7 +174,7 @@ export default function AdminPage() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Rekap_Checkin_Mahad_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `Rekap_Checkin_Mahad_SK_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -181,14 +189,14 @@ export default function AdminPage() {
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold uppercase tracking-wider text-uin-primary">Panel Superadmin</span>
             <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
-              Live Realtime &amp; SK Rektor Gate
+              SK No: {SK_INFO.nomor}
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-serif font-bold text-slate-800">
             Dashboard Okupansi &amp; Manajemen SK Ma&apos;had
           </h1>
           <p className="text-xs text-slate-500">
-            Kendali penuh alokasi kamar, verifikasi SK Rektor 500 kuota mahasantri, dan monitoring kedatangan.
+            Kendali penuh alokasi kamar, verifikasi NISN/NIM SK Mahad, dan rekapitulasi kedatangan.
           </p>
         </div>
 
@@ -245,8 +253,8 @@ export default function AdminPage() {
           }`}
         >
           <ShieldCheck className="w-4 h-4 text-emerald-600" />
-          <span>Master Data SK Rektor (Whitelist 500 Kuota)</span>
-          <span className="bg-uin-primary/10 text-uin-primary text-xs px-2 py-0.5 rounded-full">
+          <span>Master Data SK Resmi (NISN/NIM Whitelist)</span>
+          <span className="bg-uin-primary/10 text-uin-primary text-xs px-2 py-0.5 rounded-full font-mono">
             {skList.length} Nama
           </span>
         </button>
@@ -293,7 +301,7 @@ export default function AdminPage() {
                   Kontrol Akses Pemilihan Kamar Per Lantai
                 </h2>
                 <p className="text-xs text-slate-500">
-                  Admin dapat mengunci atau membuka lantai tertentu (contoh: Lantai 2 dikhususkan untuk Mahasiswa Internasional).
+                  Admin dapat mengunci atau membuka lantai tertentu (contoh: Lantai 2 dikhususkan untuk Mahasantri Internasional).
                 </p>
               </div>
             </div>
@@ -376,10 +384,10 @@ export default function AdminPage() {
                   <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
-                    placeholder="Cari Nama / NIM / Kamar..."
+                    placeholder="Cari Nama / NISN / Kamar..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-uin-primary/30 outline-none w-48"
+                    className="pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-uin-primary/30 outline-none w-48 font-mono"
                   />
                 </div>
 
@@ -413,9 +421,10 @@ export default function AdminPage() {
               <table className="w-full text-left text-xs text-slate-600">
                 <thead className="bg-slate-50 text-slate-700 font-bold uppercase tracking-wider text-[10px] border-y border-slate-200">
                   <tr>
-                    <th className="p-3">NIM</th>
+                    <th className="p-3">NIM / NISN</th>
                     <th className="p-3">Nama Mahasantri</th>
-                    <th className="p-3">Fakultas &amp; Prodi</th>
+                    <th className="p-3">Jenis Pendaftaran</th>
+                    <th className="p-3">Jurusan &amp; Fakultas</th>
                     <th className="p-3">Kamar &amp; Bed</th>
                     <th className="p-3">Posisi</th>
                     <th className="p-3">No. WhatsApp</th>
@@ -426,26 +435,31 @@ export default function AdminPage() {
                 <tbody className="divide-y divide-slate-100">
                   {filteredMhs.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="p-8 text-center text-slate-400">
+                      <td colSpan={9} className="p-8 text-center text-slate-400">
                         Tidak ada data mahasantri yang cocok dengan kriteria filter.
                       </td>
                     </tr>
                   ) : (
                     filteredMhs.map((m) => (
                       <tr key={m.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="p-3 font-mono font-bold text-slate-800">{m.nim}</td>
+                        <td className="p-3 font-mono font-bold text-slate-800">{m.nimNisn}</td>
                         <td className="p-3 font-semibold text-slate-900">
                           <div className="flex items-center gap-1.5">
                             <span>{m.nama}</span>
                             {m.isInternasional && (
                               <span className="text-[9px] bg-amber-100 text-amber-800 px-1 py-0.2 rounded font-bold">
-                                INT
+                                {m.asalNegara || 'INT'}
                               </span>
                             )}
                           </div>
                         </td>
                         <td className="p-3">
-                          <div className="font-medium text-slate-700">{m.prodi}</div>
+                          <span className="text-[10px] font-medium bg-slate-100 px-2 py-0.5 rounded text-slate-700">
+                            {m.jenisPendaftaran}
+                          </span>
+                        </td>
+                        <td className="p-3">
+                          <div className="font-medium text-slate-700">{m.jurusan}</div>
                           <div className="text-[10px] text-slate-400">{m.fakultas}</div>
                         </td>
                         <td className="p-3">
@@ -482,7 +496,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Tab: Master Data SK Rektor (Whitelist Gatekeeper) */}
+      {/* Tab: Master Data SK (Whitelist NISN & NIM) */}
       {activeTab === 'SK_MASTER' && (
         <div className="space-y-6">
           
@@ -491,10 +505,10 @@ export default function AdminPage() {
               <div>
                 <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
                   <ShieldCheck className="w-5 h-5 text-uin-primary" />
-                  Master Data Whitelist SK Rektor ({skList.length} Mahasantri Terdaftar)
+                  Master Data Whitelist SK No. {SK_INFO.nomor}
                 </h2>
                 <p className="text-xs text-slate-500">
-                  Hanya nama-nama dan NIM berikut yang diizinkan oleh sistem untuk memilih kamar.
+                  Data NISN (Mahasantri Baru) &amp; NIM (Perpanjangan) resmi yang diizinkan sistem untuk memilih kamar.
                 </p>
               </div>
 
@@ -503,7 +517,7 @@ export default function AdminPage() {
                 className="flex items-center gap-2 px-4 py-2 bg-uin-primary hover:bg-uin-secondary text-white font-bold text-xs rounded-xl shadow transition-all shrink-0"
               >
                 <Plus className="w-4 h-4" />
-                <span>Tambah Mahasantri ke SK</span>
+                <span>Tambah Mahasantri Baru ke SK</span>
               </button>
             </div>
 
@@ -512,33 +526,40 @@ export default function AdminPage() {
               <table className="w-full text-left text-xs text-slate-600">
                 <thead className="bg-slate-50 text-slate-700 font-bold uppercase tracking-wider text-[10px] border-y border-slate-200">
                   <tr>
-                    <th className="p-3">NIM</th>
-                    <th className="p-3">Nama Mahasantri</th>
-                    <th className="p-3">Fakultas</th>
-                    <th className="p-3">Program Studi</th>
-                    <th className="p-3">Kategori</th>
+                    <th className="p-3">No</th>
+                    <th className="p-3">NIM / NISN</th>
+                    <th className="p-3">Nama Lengkap</th>
+                    <th className="p-3">Jenis Pendaftaran</th>
+                    <th className="p-3">Fakultas &amp; Jurusan</th>
                     <th className="p-3">Status Pemilihan Kamar</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {skList.map((item) => {
-                    const booking = mhsList.find((m) => m.nim.trim() === item.nim.trim());
+                  {skList.map((item, idx) => {
+                    const booking = mhsList.find(
+                      (m) => m.nimNisn.trim().toLowerCase() === item.nimNisn.trim().toLowerCase()
+                    );
                     return (
-                      <tr key={item.nim} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="p-3 font-mono font-bold text-slate-900">{item.nim}</td>
-                        <td className="p-3 font-bold text-slate-800">{item.nama}</td>
-                        <td className="p-3 text-slate-600">{item.fakultas}</td>
-                        <td className="p-3 text-slate-600">{item.prodi}</td>
+                      <tr key={item.nimNisn + idx} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="p-3 font-mono text-slate-400">{item.no || idx + 1}</td>
+                        <td className="p-3 font-mono font-bold text-slate-900">{item.nimNisn}</td>
+                        <td className="p-3 font-bold text-slate-800">
+                          <div className="flex items-center gap-1.5">
+                            <span>{item.nama}</span>
+                            {item.isInternasional && (
+                              <span className="text-[9px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">
+                                {item.asalNegara || 'Internasional'}
+                              </span>
+                            )}
+                          </div>
+                        </td>
                         <td className="p-3">
-                          {item.isInternasional ? (
-                            <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">
-                              Internasional
-                            </span>
-                          ) : (
-                            <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-medium">
-                              Reguler
-                            </span>
-                          )}
+                          <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium">
+                            {item.jenisPendaftaran}
+                          </span>
+                        </td>
+                        <td className="p-3 text-slate-600">
+                          {item.jurusan} ({item.fakultas})
                         </td>
                         <td className="p-3">
                           {booking ? (
@@ -572,7 +593,7 @@ export default function AdminPage() {
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
                 <Plus className="w-5 h-5 text-uin-primary" />
-                Tambah Mahasantri ke SK Rektor
+                Tambah Mahasantri ke Lampiran SK
               </h3>
               <button onClick={() => setShowAddSkModal(false)} className="text-slate-400 hover:text-slate-700">
                 ✕
@@ -581,13 +602,13 @@ export default function AdminPage() {
 
             <form onSubmit={handleAddSk} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-slate-700 mb-1">NIM Mahasantri *</label>
+                <label className="block font-bold text-slate-700 mb-1">NIM / NISN Mahasantri *</label>
                 <input
                   type="text"
                   required
-                  placeholder="Contoh: 2381100099"
-                  value={newNim}
-                  onChange={(e) => setNewNim(e.target.value)}
+                  placeholder="Contoh NISN: 0089221715 atau NIM: 2530101001"
+                  value={newNimNisn}
+                  onChange={(e) => setNewNimNisn(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-mono outline-none focus:ring-2 focus:ring-uin-primary/30"
                 />
               </div>
@@ -604,38 +625,80 @@ export default function AdminPage() {
                 />
               </div>
 
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Fakultas</label>
-                <select
-                  value={newFakultas}
-                  onChange={(e) => setNewFakultas(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-uin-primary/30"
-                >
-                  {FAKULTAS_LIST.map((f) => (
-                    <option key={f} value={f}>{f}</option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Jenis Pendaftaran</label>
+                  <select
+                    value={newJenis}
+                    onChange={(e) => setNewJenis(e.target.value as any)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-uin-primary/30"
+                  >
+                    <option value="Calon Mahasantri Baru">Calon Mahasantri Baru (NISN)</option>
+                    <option value="Perpanjangan">Perpanjangan (NIM)</option>
+                    <option value="Mahasantri Internasional">Mahasantri Internasional</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Jenis Kelamin</label>
+                  <select
+                    value={newGender}
+                    onChange={(e) => setNewGender(e.target.value as any)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-uin-primary/30"
+                  >
+                    <option value="L">Laki-laki (Ma'had Qodim)</option>
+                    <option value="P">Perempuan (Ma'had Jadid)</option>
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Program Studi</label>
-                <input
-                  type="text"
-                  placeholder="Contoh: Sistem Informasi"
-                  value={newProdi}
-                  onChange={(e) => setNewProdi(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-uin-primary/30"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Fakultas</label>
+                  <select
+                    value={newFakultas}
+                    onChange={(e) => setNewFakultas(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-uin-primary/30"
+                  >
+                    <option value="FITK">FITK</option>
+                    <option value="FASYA">FASYA</option>
+                    <option value="FEBI">FEBI</option>
+                    <option value="FDKI">FDKI</option>
+                    <option value="FUA">FUA</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Program Studi / Jurusan</label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: PAI / HUKUM KELUARGA"
+                    value={newJurusan}
+                    onChange={(e) => setNewJurusan(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-uin-primary/30"
+                  />
+                </div>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <span className="font-semibold text-slate-700">Mahasiswa Internasional?</span>
-                <input
-                  type="checkbox"
-                  checked={newIsInt}
-                  onChange={(e) => setNewIsInt(e.target.checked)}
-                  className="w-4 h-4 accent-uin-primary cursor-pointer"
-                />
+              <div className="space-y-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-slate-700">Mahasantri Internasional?</span>
+                  <input
+                    type="checkbox"
+                    checked={newIsInt}
+                    onChange={(e) => setNewIsInt(e.target.checked)}
+                    className="w-4 h-4 accent-uin-primary cursor-pointer"
+                  />
+                </div>
+                {newIsInt && (
+                  <input
+                    type="text"
+                    placeholder="Asal Negara (Filipina, Thailand, Nigeria, dll)"
+                    value={newNegara}
+                    onChange={(e) => setNewNegara(e.target.value)}
+                    className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                  />
+                )}
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3">

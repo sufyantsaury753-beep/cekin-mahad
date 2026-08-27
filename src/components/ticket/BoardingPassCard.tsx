@@ -3,6 +3,7 @@
 import React, { useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Mahasantri } from '@/lib/types';
+import { SK_INFO } from '@/lib/constants';
 import {
   Building2,
   Printer,
@@ -29,7 +30,7 @@ export default function BoardingPassCard({ mahasantri }: BoardingPassCardProps) 
   };
 
   const handleShareWa = () => {
-    const text = `*KARTU CHECK-IN DIGITAL MA'HAD UIN SIBER SYEKH NURJATI*\nNama: ${mahasantri.nama}\nNIM: ${mahasantri.nim}\nKamar: ${mahasantri.nomorKamar} (Lt. ${mahasantri.lantai} ${mahasantri.jajaran === 'BELAKANG' ? 'Jajaran Belakang' : 'Jajaran Depan'})\nBed: No. ${mahasantri.bedNumber}\nStatus: ${isCheckedIn ? 'SUDAH CHECK-IN' : 'SIAP CHECK-IN'}\n\nLihat Tiket Online: ${window.location.origin}/tiket/${mahasantri.nim}`;
+    const text = `*KARTU CHECK-IN DIGITAL MA'HAD UIN SIBER SYEKH NURJATI*\nNama: ${mahasantri.nama}\nNIM/NISN: ${mahasantri.nimNisn} (${mahasantri.jenisPendaftaran})\nKamar: ${mahasantri.nomorKamar} (Lt. ${mahasantri.lantai})\nBed: No. ${mahasantri.bedNumber}\nStatus: ${isCheckedIn ? 'SUDAH CHECK-IN' : 'SIAP CHECK-IN'}\n\nLihat Tiket Online: ${window.location.origin}/tiket/${mahasantri.nimNisn}`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
   };
 
@@ -58,7 +59,7 @@ export default function BoardingPassCard({ mahasantri }: BoardingPassCardProps) 
                 <h1 className="font-serif font-bold text-lg sm:text-xl text-white">
                   UPT MA&apos;HAD AL-JAMI&apos;AH
                 </h1>
-                <p className="text-xs text-emerald-200">UIN Siber Syekh Nurjati Cirebon</p>
+                <p className="text-xs text-emerald-200">UIN Siber Syekh Nurjati Cirebon &bull; SK {SK_INFO.nomor}</p>
               </div>
             </div>
 
@@ -97,15 +98,21 @@ export default function BoardingPassCard({ mahasantri }: BoardingPassCardProps) 
             <div className="flex-1 text-center sm:text-left space-y-1.5">
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                 <h2 className="text-xl font-bold text-slate-800">{mahasantri.nama}</h2>
+                <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
+                  {mahasantri.jenisPendaftaran}
+                </span>
                 {mahasantri.isInternasional && (
                   <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" /> Internasional
+                    <Sparkles className="w-3 h-3" /> {mahasantri.asalNegara || 'Internasional'}
                   </span>
                 )}
               </div>
-              <p className="text-sm font-mono font-semibold text-emerald-800">NIM: {mahasantri.nim}</p>
+              
+              <div className="text-xs font-mono font-bold text-emerald-800">
+                NIM / NISN: <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-900">{mahasantri.nimNisn}</span>
+              </div>
               <p className="text-xs text-slate-600 font-medium">
-                {mahasantri.prodi} &bull; {mahasantri.fakultas}
+                {mahasantri.jurusan} &bull; {mahasantri.fakultas}
               </p>
               <div className="text-xs text-slate-500 flex items-center justify-center sm:justify-start gap-1.5 pt-1">
                 <span>WhatsApp: {mahasantri.noWa}</span>
@@ -123,7 +130,7 @@ export default function BoardingPassCard({ mahasantri }: BoardingPassCardProps) 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
               <div className="bg-white/90 p-2.5 rounded-xl border border-emerald-200/60 shadow-sm">
                 <span className="text-[10px] text-slate-500 uppercase font-semibold block">Gedung</span>
-                <span className="text-sm font-bold text-slate-800">Ma&apos;had Qodim</span>
+                <span className="text-sm font-bold text-slate-800">{mahasantri.jenisKelamin === 'L' ? 'Ma\'had Qodim' : 'Ma\'had Jadid'}</span>
               </div>
               <div className="bg-white/90 p-2.5 rounded-xl border border-emerald-200/60 shadow-sm">
                 <span className="text-[10px] text-slate-500 uppercase font-semibold block">Lantai</span>
@@ -153,10 +160,10 @@ export default function BoardingPassCard({ mahasantri }: BoardingPassCardProps) 
             <div className="flex flex-col items-center sm:items-start text-center sm:text-left space-y-1">
               <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                Barcode Check-in Mandiri
+                Barcode Check-in Mandiri (Hari-H)
               </span>
               <p className="text-xs text-slate-500 max-w-xs">
-                Tunjukkan QR ini langsung ke Pengurus di <strong className="text-slate-700">Lantai {mahasantri.lantai} Lorong Kamar {mahasantri.nomorKamar}</strong>. Tidak perlu antre di lobi bawah.
+                Tunjukkan QR ini langsung ke Pengurus di <strong className="text-slate-700">Lantai {mahasantri.lantai} Lorong Kamar {mahasantri.nomorKamar}</strong> pada jadwal 19–21 Agustus 2026.
               </p>
               <span className="text-[10px] font-mono text-slate-400 pt-1">
                 Token: {mahasantri.qrToken}
@@ -191,8 +198,8 @@ export default function BoardingPassCard({ mahasantri }: BoardingPassCardProps) 
 
         {/* Footer info inside card */}
         <div className="bg-slate-100 px-6 py-3 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500 font-mono">
-          <span>Tgl Daftar: {new Date(mahasantri.registeredAt).toLocaleDateString('id-ID')}</span>
-          <span>معـهـدي جنـتـي</span>
+          <span>Tgl Terbit: {new Date(mahasantri.registeredAt).toLocaleDateString('id-ID')}</span>
+          <span>معـهـدي جنـتـي &bull; {SK_INFO.mudir}</span>
         </div>
 
       </div>

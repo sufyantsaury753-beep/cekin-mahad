@@ -11,18 +11,18 @@ import { ArrowLeft, AlertCircle, BedDouble } from 'lucide-react';
 export default function DetailTiketPage() {
   const params = useParams();
   const router = useRouter();
-  const nim = params?.nim as string;
+  const nimNisn = params?.nim as string;
 
   const [mahasantri, setMahasantri] = useState<Mahasantri | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (nim) {
-      const data = MahadStore.getMahasantriByNim(decodeURIComponent(nim));
+    if (nimNisn) {
+      const data = MahadStore.getMahasantriByNimNisn(decodeURIComponent(nimNisn));
       setMahasantri(data || null);
       setLoading(false);
     }
-  }, [nim]);
+  }, [nimNisn]);
 
   if (loading) {
     return (
@@ -40,14 +40,14 @@ export default function DetailTiketPage() {
         </div>
         <h2 className="text-xl font-bold text-slate-800">E-Tiket Tidak Ditemukan</h2>
         <p className="text-xs text-slate-500">
-          Mahasantri dengan NIM <strong className="text-slate-700">{nim}</strong> belum terdaftar atau salah memasukkan NIM.
+          Mahasantri dengan NIM/NISN <strong className="text-slate-700">{decodeURIComponent(nimNisn)}</strong> belum memilih kamar atau salah memasukkan identitas.
         </p>
         <div className="pt-2 flex flex-col gap-2">
           <Link
             href="/tiket"
             className="px-5 py-2.5 bg-slate-800 text-white text-xs font-semibold rounded-xl hover:bg-slate-900"
           >
-            Cari Ulang NIM
+            Cari Ulang NIM / NISN
           </Link>
           <Link
             href="/daftar"
@@ -72,7 +72,7 @@ export default function DetailTiketPage() {
           <span>Cari Tiket Lain</span>
         </Link>
 
-        <span className="text-xs text-slate-400">ID Tiket: {mahasantri.id}</span>
+        <span className="text-xs text-slate-400 font-mono">ID Tiket: {mahasantri.id}</span>
       </div>
 
       <BoardingPassCard mahasantri={mahasantri} />

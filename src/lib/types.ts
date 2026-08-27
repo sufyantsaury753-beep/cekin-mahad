@@ -6,21 +6,26 @@ export type RoomCategory = 'UMUM' | 'INTERNASIONAL' | 'KHUSUS';
 
 export type JajaranPosition = 'DEPAN' | 'BELAKANG';
 
+export type JenisPendaftaran = 'Calon Mahasantri Baru' | 'Perpanjangan' | 'Mahasantri Internasional';
+
 export interface SKMahasantri {
-  nim: string;
+  no: number;
+  nimNisn: string; // Bisa NISN (Maba) atau NIM (Mahasantri Lama / Perpanjangan)
   nama: string;
-  fakultas: string;
-  prodi: string;
   jenisKelamin: Gender;
+  jenisPendaftaran: JenisPendaftaran;
+  fakultas: string;
+  jurusan: string;
+  asalNegara?: string; // Khusus Internasional (Thailand, Filipina, Sudan, Nigeria, Pakistan, Mesir, dll)
   isInternasional: boolean;
-  skNomor?: string;
+  skNomor: string;
 }
 
 export interface Bed {
   bedNumber: number; // 1, 2, 3, 4
   isOccupied: boolean;
   mahasantriId?: string;
-  mahasantriNim?: string;
+  mahasantriNimNisn?: string;
   mahasantriNama?: string;
 }
 
@@ -29,7 +34,7 @@ export interface Kamar {
   nomor: string; // "513"
   lantai: number; // 1 - 5
   jajaran: JajaranPosition;
-  gedung: string; // "Ma'had Qodim"
+  gedung: string; // "Ma'had Qodim" (Putra) / "Ma'had Jadid" (Putri)
   gender: Gender;
   kategori: RoomCategory;
   isLocked: boolean;
@@ -40,11 +45,13 @@ export interface Kamar {
 
 export interface Mahasantri {
   id: string;
-  nim: string;
+  nimNisn: string; // NIM atau NISN
   nama: string;
   jenisKelamin: Gender;
+  jenisPendaftaran: JenisPendaftaran;
   fakultas: string;
-  prodi: string;
+  jurusan: string;
+  asalNegara?: string;
   noWa: string;
   namaWali: string;
   noWaWali: string;
@@ -66,7 +73,7 @@ export interface Mahasantri {
 
 export interface CheckInLog {
   id: string;
-  nim: string;
+  nimNisn: string;
   nama: string;
   nomorKamar: string;
   bedNumber: number;
