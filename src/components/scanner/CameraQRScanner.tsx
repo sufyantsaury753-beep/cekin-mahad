@@ -18,10 +18,13 @@ import {
   X,
   Sparkles,
   RefreshCw,
+  Upload,
+  Video,
 } from 'lucide-react';
 
 export default function CameraQRScanner() {
   const [scannerActive, setScannerActive] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
   const [manualInput, setManualInput] = useState('');
   const [scannedMahasantri, setScannedMahasantri] = useState<Mahasantri | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -30,6 +33,7 @@ export default function CameraQRScanner() {
   const [catatanBarang, setCatatanBarang] = useState('Pemeriksaan barang sesuai SOP Ma\'had.');
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const fileCameraInputRef = useRef<HTMLInputElement>(null);
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
   const scannerContainerId = 'qr-reader-container';
 
@@ -65,36 +69,66 @@ export default function CameraQRScanner() {
     }
   };
 
-  // Start Live Camera Scanner
+  // Start Live Camera Scanner with robust device selection & container sizing
   const startScanner = async () => {
     try {
       setErrorMessage(null);
+      setIsStarting(true);
+      setScannerActive(true); // Make container visible FIRST so video element gets proper dimensions!
+
+      // Small delay to allow DOM to render container with full width/height
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
       if (!html5QrCodeRef.current) {
         html5QrCodeRef.current = new Html5Qrcode(scannerContainerId);
+      } else if (html5QrCodeRef.current.isScanning) {
+        await html5QrCodeRef.current.stop();
+      }
+
+      // Detect cameras
+      let cameraIdOrConfig: any = { facingMode: 'environment' };
+      try {
+        const cameras = await Html5Qrcode.getCameras();
+        if (cameras && cameras.length > 0) {
+          // Find back camera
+          const backCam = cameras.find(
+            (c) =>
+              c.label.toLowerCase().includes('back') ||
+              c.label.toLowerCase().includes('belakang') ||
+              c.label.toLowerCase().includes('rear') ||
+              c.label.toLowerCase().includes('environment')
+          ) || cameras[cameras.length - 1]; // usually last camera on multi-lens phones is main back
+          cameraIdOrConfig = backCam.id;
+        }
+      } catch (camErr) {
+        console.warn('Could not enumerate cameras, falling back to facingMode:', camErr);
       }
 
       await html5QrCodeRef.current.start(
-        { facingMode: 'environment' }, // Back camera by default
+        cameraIdOrConfig,
         {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
+          fps: 15,
+          qrbox: (viewfinderWidth, viewfinderHeight) => {
+            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+            const qrboxSize = Math.max(200, Math.floor(minEdge * 0.8));
+            return { width: qrboxSize, height: qrboxSize };
+          },
           aspectRatio: 1.0,
         },
         (decodedText) => {
           handleScannedData(decodedText);
         },
-        (error) => {
-          // ignore scan frame errors
-        }
+        () => {}
       );
 
-      setScannerActive(true);
+      setIsStarting(false);
     } catch (err: any) {
       console.error('Camera error:', err);
       setErrorMessage(
-        'Tidak dapat mengakses kamera. Pastikan izin kamera telah diberikan atau gunakan opsi pencarian manual NISN/NIM di bawah.'
+        'Gagal menyalakan video live kamera. Anda juga bisa menggunakan tombol "Jepret Foto QR" atau ketik NISN manual.'
       );
       setScannerActive(false);
+      setIsStarting(false);
     }
   };
 
@@ -103,10 +137,28 @@ export default function CameraQRScanner() {
     if (html5QrCodeRef.current && scannerActive) {
       try {
         await html5QrCodeRef.current.stop();
-        setScannerActive(false);
       } catch (err) {
         console.error('Error stopping scanner:', err);
       }
+    }
+    setScannerActive(false);
+    setIsStarting(false);
+  };
+
+  // Scan from Direct Photo Snap / File
+  const handleScanFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setErrorMessage(null);
+      if (!html5QrCodeRef.current) {
+        html5QrCodeRef.current = new Html5Qrcode(scannerContainerId);
+      }
+      const decoded = await html5QrCodeRef.current.scanFile(file, true);
+      handleScannedData(decoded);
+    } catch (err) {
+      setErrorMessage('Barcode tidak terdeteksi pada foto. Pastikan posisi QR Code tegak, terang, dan tidak buram.');
     }
   };
 
@@ -154,77 +206,102 @@ export default function CameraQRScanner() {
   return (
     <div className="space-y-6">
       
+      {/* Hidden File Input for Direct Camera Snap */}
+      <input
+        ref={fileCameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleScanFile}
+        className="hidden"
+      />
+
       {/* Scanner Control Panel */}
-      <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+        
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div>
-            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <h2 className="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
               <Camera className="w-5 h-5 text-uin-primary" />
-              Scanner Kamera E-Checkin Pengurus
+              Scanner Barcode E-Checkin Pengurus
             </h2>
             <p className="text-xs text-slate-500">
-              Arahkan kamera HP ke E-Tiket Mahasantri saat tiba di lorong lantai Anda (Jadwal: {SK_INFO.jadwal}).
+              Arahkan kamera ke E-Tiket Mahasantri saat tiba di lorong lantai (Jadwal: {SK_INFO.jadwal}).
             </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {!scannerActive ? (
-              <button
-                type="button"
-                onClick={startScanner}
-                className="flex items-center gap-2 px-4 py-2 bg-uin-primary text-white font-semibold text-xs sm:text-sm rounded-xl hover:bg-uin-secondary shadow transition-all"
-              >
-                <Camera className="w-4 h-4" />
-                <span>Buka Kamera Scanner</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={stopScanner}
-                className="flex items-center gap-2 px-4 py-2 bg-rose-600 text-white font-semibold text-xs sm:text-sm rounded-xl hover:bg-rose-700 shadow transition-all"
-              >
-                <X className="w-4 h-4" />
-                <span>Tutup Kamera</span>
-              </button>
-            )}
           </div>
         </div>
 
-        {/* Live Camera Viewfinder Box */}
+        {/* Action Buttons: Live Video Stream & Direct Snap */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          
+          {!scannerActive ? (
+            <button
+              type="button"
+              disabled={isStarting}
+              onClick={startScanner}
+              className="flex items-center justify-center gap-2 py-3.5 px-4 bg-uin-primary hover:bg-uin-secondary text-white font-bold text-sm rounded-2xl shadow-md transition-all"
+            >
+              <Video className="w-5 h-5 text-uin-accent" />
+              <span>{isStarting ? 'Menyiapkan Kamera...' : 'Buka Live Video Scanner'}</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={stopScanner}
+              className="flex items-center justify-center gap-2 py-3.5 px-4 bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm rounded-2xl shadow-md transition-all"
+            >
+              <X className="w-5 h-5" />
+              <span>Tutup Kamera Video</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => fileCameraInputRef.current?.click()}
+            className="flex items-center justify-center gap-2 py-3.5 px-4 bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs sm:text-sm rounded-2xl border border-slate-700 shadow transition-all"
+          >
+            <Camera className="w-4 h-4 text-emerald-400" />
+            <span>Jepret / Foto QR Tiket (HP)</span>
+          </button>
+
+        </div>
+
+        {/* Live Camera Viewfinder Box with proper sizing & rounded corners */}
         <div
           id={scannerContainerId}
-          className={`w-full max-w-sm mx-auto overflow-hidden rounded-2xl border-2 transition-all ${
-            scannerActive ? 'border-uin-primary shadow-lg bg-black min-h-[300px]' : 'hidden'
+          className={`w-full max-w-sm mx-auto overflow-hidden rounded-2xl border-2 border-uin-primary shadow-lg bg-black ${
+            scannerActive ? 'block min-h-[280px] my-3' : 'hidden'
           }`}
+          style={{ width: '100%', maxWidth: '360px' }}
         ></div>
 
         {/* Manual NISN / NIM Search Fallback */}
-        <div className="pt-2">
+        <div className="pt-2 border-t border-slate-100">
           <form onSubmit={handleManualSearch} className="flex gap-2">
             <div className="relative flex-1">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Atau ketik NISN / NIM / Token Barcode manual..."
+                placeholder="Atau ketik NISN / NIM Mahasantri..."
                 value={manualInput}
                 onChange={(e) => setManualInput(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-uin-primary/30 font-mono"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-uin-primary/30 font-mono"
               />
             </div>
             <button
               type="submit"
-              className="px-4 py-2.5 bg-slate-800 text-white font-semibold text-xs sm:text-sm rounded-xl hover:bg-slate-900 transition-all shrink-0"
+              className="px-4 py-2.5 bg-slate-800 text-white font-semibold text-xs rounded-xl hover:bg-slate-900 transition-all shrink-0"
             >
-              Cari Mahasantri
+              Cari Data
             </button>
           </form>
         </div>
 
         {/* Error Alert */}
         {errorMessage && (
-          <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-3 text-rose-800 text-sm">
+          <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2.5 text-rose-800 text-xs sm:text-sm">
             <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-            <div className="flex-1">{errorMessage}</div>
+            <div className="flex-1 font-medium">{errorMessage}</div>
             <button onClick={() => setErrorMessage(null)} className="text-rose-500 hover:text-rose-800">
               <X className="w-4 h-4" />
             </button>
@@ -233,7 +310,7 @@ export default function CameraQRScanner() {
 
         {/* Success Alert */}
         {successMessage && (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start gap-3 text-emerald-800 text-sm">
+          <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start gap-2.5 text-emerald-800 text-xs sm:text-sm">
             <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
             <div className="flex-1 font-medium">{successMessage}</div>
             <button onClick={() => setSuccessMessage(null)} className="text-emerald-500 hover:text-emerald-800">
@@ -246,7 +323,7 @@ export default function CameraQRScanner() {
 
       {/* Scanned Mahasantri Verification Detail Modal/Card */}
       {scannedMahasantri && (
-        <div className="bg-white rounded-2xl p-6 border-2 border-uin-primary shadow-xl space-y-6 animate-fade-in">
+        <div className="bg-white rounded-3xl p-6 border-2 border-uin-primary shadow-xl space-y-6 animate-fade-in">
           
           <div className="flex items-start justify-between pb-4 border-b border-slate-100">
             <div className="flex items-center gap-3">
@@ -271,7 +348,7 @@ export default function CameraQRScanner() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
             
             {/* Mahasantri Identity */}
-            <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 md:col-span-2">
+            <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200 md:col-span-2">
               <div className="w-16 h-20 rounded-xl overflow-hidden bg-slate-200 shrink-0 border border-slate-300">
                 {scannedMahasantri.pasFotoUrl ? (
                   <img
@@ -298,7 +375,7 @@ export default function CameraQRScanner() {
             </div>
 
             {/* Room Allocation Info */}
-            <div className="bg-gradient-to-br from-uin-primary to-emerald-800 text-white p-4 rounded-xl shadow text-center space-y-1">
+            <div className="bg-gradient-to-br from-uin-primary to-emerald-800 text-white p-4 rounded-2xl shadow text-center space-y-1">
               <span className="text-[10px] uppercase font-bold tracking-wider text-uin-accent">Alokasi Kamar</span>
               <div className="text-2xl font-extrabold">Kamar {scannedMahasantri.nomorKamar}</div>
               <div className="text-sm font-semibold text-emerald-200">
@@ -314,7 +391,7 @@ export default function CameraQRScanner() {
           </div>
 
           {/* SOP Luggage Inspection Checklist */}
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
             <h5 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
               <Sparkles className="w-4 h-4 text-amber-500" />
               Pemeriksaan Barang Bawaan Sesuai SK ({SK_INFO.nomor})
