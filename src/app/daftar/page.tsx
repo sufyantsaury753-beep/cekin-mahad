@@ -61,15 +61,44 @@ export default function DaftarPage() {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setErrorMessage('Ukuran foto maksimal 5 MB.');
-      return;
-    }
-
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === 'string') {
-        setPasFotoUrl(reader.result);
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            const maxDim = 320;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+              if (width > maxDim) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              }
+            } else {
+              if (height > maxDim) {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, width, height);
+              const compressed = canvas.toDataURL('image/jpeg', 0.8);
+              setPasFotoUrl(compressed);
+            } else {
+              setPasFotoUrl(reader.result as string);
+            }
+          } catch (err) {
+            setPasFotoUrl(reader.result as string);
+          }
+        };
+        img.src = reader.result;
       }
     };
     reader.readAsDataURL(file);
@@ -166,31 +195,36 @@ export default function DaftarPage() {
     setIsSubmitting(true);
     setErrorMessage(null);
 
-    const result = MahadStore.bookRoom(
-      {
-        nimNisn: nimNisn.trim(),
-        nama: nama.trim(),
-        jenisKelamin,
-        jenisPendaftaran,
-        fakultas,
-        jurusan,
-        asalNegara,
-        noWa: noWa.trim(),
-        namaWali: namaWali.trim() || 'Wali Mahasantri',
-        noWaWali: noWaWali.trim() || '-',
-        isInternasional,
-        pasFotoUrl,
-      },
-      selectedKamar.id,
-      selectedBedNumber
-    );
+    try {
+      const result = MahadStore.bookRoom(
+        {
+          nimNisn: nimNisn.trim(),
+          nama: nama.trim(),
+          jenisKelamin,
+          jenisPendaftaran,
+          fakultas,
+          jurusan,
+          asalNegara,
+          noWa: noWa.trim(),
+          namaWali: namaWali.trim() || 'Wali Mahasantri',
+          noWaWali: noWaWali.trim() || '-',
+          isInternasional,
+          pasFotoUrl,
+        },
+        selectedKamar.id,
+        selectedBedNumber
+      );
 
-    setIsSubmitting(false);
+      setIsSubmitting(false);
 
-    if (result.success && result.mahasantri) {
-      router.push(`/tiket/${result.mahasantri.nimNisn}`);
-    } else {
-      setErrorMessage(result.error || 'Terjadi kesalahan saat memproses pendaftaran.');
+      if (result.success && result.mahasantri) {
+        window.location.href = `/tiket/${encodeURIComponent(result.mahasantri.nimNisn)}`;
+      } else {
+        setErrorMessage(result.error || 'Terjadi kesalahan saat memproses pendaftaran.');
+      }
+    } catch (err: any) {
+      setIsSubmitting(false);
+      setErrorMessage(err?.message || 'Terjadi kesalahan tidak terduga.');
     }
   };
 

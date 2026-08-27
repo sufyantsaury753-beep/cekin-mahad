@@ -118,7 +118,9 @@ export const MahadStore = {
     const stored = localStorage.getItem(ROOMS_KEY);
     if (!stored) {
       const init = buildInitialRooms();
-      localStorage.setItem(ROOMS_KEY, JSON.stringify(init));
+      try {
+        localStorage.setItem(ROOMS_KEY, JSON.stringify(init));
+      } catch (e) {}
       return init;
     }
     try {
@@ -130,7 +132,11 @@ export const MahadStore = {
 
   saveRooms(rooms: Kamar[]) {
     if (typeof window === 'undefined') return;
-    localStorage.setItem(ROOMS_KEY, JSON.stringify(rooms));
+    try {
+      localStorage.setItem(ROOMS_KEY, JSON.stringify(rooms));
+    } catch (e) {
+      console.warn('localStorage saveRooms error:', e);
+    }
     window.dispatchEvent(new CustomEvent('mahad_rooms_updated', { detail: rooms }));
   },
 
@@ -139,7 +145,9 @@ export const MahadStore = {
     if (typeof window === 'undefined') return INITIAL_MAHASANTRI;
     const stored = localStorage.getItem(MHS_KEY);
     if (!stored) {
-      localStorage.setItem(MHS_KEY, JSON.stringify(INITIAL_MAHASANTRI));
+      try {
+        localStorage.setItem(MHS_KEY, JSON.stringify(INITIAL_MAHASANTRI));
+      } catch (e) {}
       return INITIAL_MAHASANTRI;
     }
     try {
@@ -151,7 +159,11 @@ export const MahadStore = {
 
   saveMahasantriList(list: Mahasantri[]) {
     if (typeof window === 'undefined') return;
-    localStorage.setItem(MHS_KEY, JSON.stringify(list));
+    try {
+      localStorage.setItem(MHS_KEY, JSON.stringify(list));
+    } catch (e) {
+      console.warn('localStorage saveMahasantriList error (quota limit exceeded?):', e);
+    }
     window.dispatchEvent(new CustomEvent('mahad_mhs_updated', { detail: list }));
   },
 
