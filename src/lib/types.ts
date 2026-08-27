@@ -8,6 +8,28 @@ export type JajaranPosition = 'DEPAN' | 'BELAKANG';
 
 export type JenisPendaftaran = 'Calon Mahasantri Baru' | 'Perpanjangan' | 'Mahasantri Internasional';
 
+export type UserRole = 'ADMIN' | 'PENGURUS' | 'MAHASANTRI';
+
+export interface UserSession {
+  role: UserRole;
+  name: string;
+  identifier: string; // Email, Username, or NIM/NISN
+  floorAssigned?: number; // Khusus Pengurus (1 - 5)
+  mahasantriData?: Mahasantri;
+  skData?: SKMahasantri;
+  token: string;
+}
+
+export interface PengurusAccount {
+  id: string;
+  username: string;
+  nama: string;
+  lantai: number;
+  gedung: string;
+  password: string;
+  noWa: string;
+}
+
 export interface SKMahasantri {
   no: number;
   nimNisn: string; // Bisa NISN (Maba) atau NIM (Mahasantri Lama / Perpanjangan)
@@ -16,9 +38,13 @@ export interface SKMahasantri {
   jenisPendaftaran: JenisPendaftaran;
   fakultas: string;
   jurusan: string;
-  asalNegara?: string; // Khusus Internasional (Thailand, Filipina, Sudan, Nigeria, Pakistan, Mesir, dll)
+  asalNegara?: string; // Khusus Internasional
   isInternasional: boolean;
   skNomor: string;
+  // Security & Authentication
+  pin?: string; // 6-digit Secret PIN dibuat saat aktivasi pertama
+  noWaRegistered?: string; // No WA yang didaftarkan saat aktivasi
+  activatedAt?: string;
 }
 
 export interface Bed {
@@ -69,6 +95,7 @@ export interface Mahasantri {
   catatanBarang?: string;
   qrToken: string;
   registeredAt: string;
+  pin?: string;
 }
 
 export interface CheckInLog {

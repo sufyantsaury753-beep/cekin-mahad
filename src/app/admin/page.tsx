@@ -650,12 +650,14 @@ export default function AdminPage() {
                     <th className="p-3">Jenis Pendaftaran</th>
                     <th className="p-3">Fakultas &amp; Jurusan</th>
                     <th className="p-3">Status Pemilihan Kamar</th>
+                    <th className="p-3">Keamanan PIN</th>
+                    <th className="p-3 text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredSkList.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="p-8 text-center text-slate-400">
+                      <td colSpan={8} className="p-8 text-center text-slate-400">
                         Tidak ditemukan nama mahasantri dengan kata kunci "<strong>{skSearchQuery}</strong>".
                       </td>
                     </tr>
@@ -664,6 +666,7 @@ export default function AdminPage() {
                       const booking = mhsList.find(
                         (m) => m.nimNisn.trim().toLowerCase() === item.nimNisn.trim().toLowerCase()
                       );
+                      const isPinSet = Boolean(item.pin);
                       return (
                         <tr key={item.nimNisn + idx} className="hover:bg-slate-50/80 transition-colors">
                           <td className="p-3 font-mono text-slate-400">{item.no || idx + 1}</td>
@@ -697,6 +700,35 @@ export default function AdminPage() {
                                 <Clock className="w-3.5 h-3.5" />
                                 Belum Memilih Kamar
                               </span>
+                            )}
+                          </td>
+                          <td className="p-3">
+                            {isPinSet ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                                🔒 PIN Aktif ({item.pin})
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-slate-400 italic">
+                                Belum Aktivasi
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3 text-right">
+                            {isPinSet && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (confirm(`Reset PIN untuk mahasantri ${item.nama} (${item.nimNisn})? Mahasantri akan diminta membuat PIN baru saat login.`)) {
+                                    MahadStore.resetMahasantriPin(item.nimNisn);
+                                    setNotification(`PIN untuk ${item.nama} berhasil di-reset.`);
+                                    loadData();
+                                    setTimeout(() => setNotification(null), 3000);
+                                  }
+                                }}
+                                className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-[10px] rounded-lg border border-rose-200 transition-all"
+                              >
+                                Reset PIN
+                              </button>
                             )}
                           </td>
                         </tr>

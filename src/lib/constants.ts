@@ -464,3 +464,59 @@ export const ATURAN_BARANG = [
   { item: 'Peralatan Mandi & Cuci Pakaian', allowed: true, desc: 'Ember, gayung, hanger, dll.' },
   { item: 'Obat-obatan Pribadi', allowed: true, desc: 'Wajib lapor jika ada riwayat sakit khusus' },
 ];
+
+export const DEFAULT_ADMIN = {
+  email: 'admin@mahad.uinssc.ac.id',
+  nama: 'Superadmin UPT Ma\'had',
+  password: 'adminmahad2026',
+  role: 'ADMIN' as const,
+};
+
+export const DEFAULT_PENGURUS_LIST = [
+  {
+    id: 'PGR-LT1',
+    username: 'pengurus.lt1',
+    nama: 'Ustadz Hasan (Pengurus Lantai 1)',
+    lantai: 1,
+    gedung: "Ma'had Qodim",
+    password: 'mahad2026',
+    noWa: '08123456701',
+  },
+  {
+    id: 'PGR-LT2',
+    username: 'pengurus.lt2',
+    nama: 'Ustadz Farhan (Pengurus Lantai 2 - Internasional)',
+    lantai: 2,
+    gedung: "Ma'had Qodim",
+    password: 'mahad2026',
+    noWa: '08123456702',
+  },
+  {
+    id: 'PGR-LT3',
+    username: 'pengurus.lt3',
+    nama: 'Ustadz Ridwan (Pengurus Lantai 3)',
+    lantai: 3,
+    gedung: "Ma'had Qodim",
+    password: 'mahad2026',
+    noWa: '08123456703',
+  },
+  {
+    id: 'PGR-LT4',
+    username: 'pengurus.lt4',
+    nama: 'Ustadz Zaky (Pengurus Lantai 4)',
+    lantai: 4,
+    gedung: "Ma'had Qodim",
+    password: 'mahad2026',
+    noWa: '08123456704',
+  },
+  {
+    id: 'PGR-LT5',
+    username: 'pengurus.lt5',
+    nama: 'Ustadz Muhsin (Pengurus Lantai 5)',
+    lantai: 5,
+    gedung: "Ma'had Qodim",
+    password: 'mahad2026',
+    noWa: '08123456705',
+  },
+];
+
