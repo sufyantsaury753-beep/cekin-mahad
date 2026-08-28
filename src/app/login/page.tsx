@@ -335,7 +335,7 @@ function LoginForm() {
                     />
                   </div>
                   <p className="text-[11px] text-slate-400 mt-1">
-                    Gunakan nomor identitas yang tercantum di SK Pengumuman No: {SK_INFO.nomor}.
+                    Gunakan nomor identitas yang tercantum di Surat Keputusan (SK) Resmi Ma&apos;had.
                   </p>
                 </div>
 

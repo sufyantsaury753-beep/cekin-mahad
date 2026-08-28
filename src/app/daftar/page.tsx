@@ -265,7 +265,7 @@ function DaftarPageContent() {
       <div className="text-center space-y-2">
         <span className="text-xs font-bold uppercase tracking-wider text-uin-secondary flex items-center justify-center gap-1.5">
           <ShieldCheck className="w-4 h-4 text-uin-primary" />
-          Pendaftaran Resmi SK No. {SK_INFO.nomor}
+          Pendaftaran &amp; Penempatan Resmi Ma&apos;had
         </span>
         <h1 className="text-2xl sm:text-4xl font-serif font-bold text-slate-800">
           Formulir Check-In Mahasantri Mandiri
@@ -628,7 +628,7 @@ function DaftarPageContent() {
             {/* Box Identitas */}
             <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3">
               <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                <User className="w-4 h-4 text-uin-primary" /> Identitas Mahasantri (SK {SK_INFO.nomor})
+                <User className="w-4 h-4 text-uin-primary" /> Identitas Mahasantri (Terverifikasi SK)
               </h3>
               <div className="space-y-1.5 text-xs text-slate-700">
                 <div className="flex justify-between py-1 border-b border-slate-200/60">

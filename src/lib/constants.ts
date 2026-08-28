@@ -1,14 +1,14 @@
 import { Kamar, Mahasantri, SKMahasantri } from './types';
 
 export const SK_INFO = {
-  nomor: 'B-092/Un.30/P.IV/KP.07.06/06/2026',
-  judul: 'PENETAPAN NAMA-NAMA DAN JADWAL CEK IN MAHASANTRI BARU PROGRAM MUKIM GELOMBANG 1 T.A. 2026/2027',
+  nomor: 'SK Penerimaan & Penempatan Resmi',
+  judul: 'PENETAPAN NAMA-NAMA DAN JADWAL CEK IN MAHASANTRI PROGRAM MUKIM',
   instansi: 'UPT MA\'HAD AL-JAMI\'AH UIN SIBER SYEKH NURJATI CIREBON',
-  jadwal: '19 - 21 Agustus 2026 (Pukul 08.00 – 16.00 WIB)',
+  jadwal: 'Sesuai Jadwal Resmi Kalender Akademik Ma\'had',
   contactPerson: '0858-6275-9619',
   mudir: 'Dr. Muhsin Riyadi, MA',
-  lokasiPutra: 'Asrama Ma\'had Qodim',
-  lokasiPutri: 'Asrama Ma\'had Jadid',
+  lokasiPutra: 'Asrama Ma\'had Jadid (Lt. 2-5)',
+  lokasiPutri: 'Asrama Ma\'had Qodim & Ma\'had Jadid',
 };
 
 // Generate rooms for Ma'had Jadid (Putra 09-16, Putri 01-08 & 17-24) and Ma'had Qodim (Full Putri 01-24) - Lantai 2 to 5

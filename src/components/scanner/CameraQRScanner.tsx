@@ -286,7 +286,7 @@ export default function CameraQRScanner() {
               Scanner Barcode E-Checkin Mudabbir &amp; Pengurus
             </h2>
             <p className="text-xs text-slate-500">
-              Arahkan kamera HP ke barcode E-Tiket Mahasantri saat tiba di lorong lantai (Jadwal: {SK_INFO.jadwal}).
+              Arahkan kamera HP ke barcode E-Tiket Mahasantri saat tiba di pos lantai check-in.
             </p>
           </div>
         </div>
@@ -475,7 +475,7 @@ export default function CameraQRScanner() {
           <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
             <h5 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
               <Sparkles className="w-4 h-4 text-amber-500" />
-              Pemeriksaan Barang Bawaan Sesuai SK ({SK_INFO.nomor})
+              Pemeriksaan Barang Bawaan Sesuai SOP Ma&apos;had
             </h5>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600">

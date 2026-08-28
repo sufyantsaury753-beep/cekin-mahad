@@ -43,7 +43,7 @@ export default function SearchTiketPage() {
           Cari &amp; Buka E-Tiket Mahasantri
         </h1>
         <p className="text-sm text-slate-500 max-w-md mx-auto">
-          Masukkan <strong>NISN</strong> (untuk Maba) atau <strong>NIM</strong> (untuk Perpanjangan) yang terdaftar di SK {SK_INFO.nomor}.
+          Masukkan <strong>NISN</strong> (untuk Mahasantri Baru) atau <strong>NIM</strong> (untuk Perpanjangan) yang terdaftar di Surat Keputusan (SK) Resmi Ma&apos;had.
         </p>
       </div>
 

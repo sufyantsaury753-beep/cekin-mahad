@@ -63,7 +63,7 @@ export default function BoardingPassCard({ mahasantri }: BoardingPassCardProps) 
                 <h1 className="font-serif font-bold text-lg sm:text-xl print:text-base text-white leading-tight">
                   UPT MA&apos;HAD AL-JAMI&apos;AH
                 </h1>
-                <p className="text-xs print:text-[10px] text-emerald-200">UIN Siber Syekh Nurjati Cirebon &bull; SK {SK_INFO.nomor}</p>
+                <p className="text-xs print:text-[10px] text-emerald-200">UIN Siber Syekh Nurjati Cirebon &bull; {mahasantri.skNomor || 'SK Penerimaan Mahasantri'}</p>
               </div>
             </div>
 
