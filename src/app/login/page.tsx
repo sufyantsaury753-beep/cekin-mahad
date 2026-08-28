@@ -64,7 +64,7 @@ function LoginForm() {
       const dynamic = MahadStore.getSKPengurusList();
       const combined: Array<{ id: string; username: string; nama: string; gedung: string; lantai: number; jabatan?: string }> = [];
 
-      // 1. Add all dynamic pengurus (including newly added ones like Raihan, Han, etc.)
+      // Add all active pengurus from store & Supabase
       dynamic.forEach((p) => {
         combined.push({
           id: p.id,
@@ -74,20 +74,6 @@ function LoginForm() {
           lantai: p.lantai,
           jabatan: p.jabatan,
         });
-      });
-
-      // 2. Add default pengurus if not already in list
-      DEFAULT_PENGURUS_LIST.forEach((dp) => {
-        if (!combined.some((c) => c.username === dp.username || c.id === dp.id || c.nama === dp.nama)) {
-          combined.push({
-            id: dp.id,
-            username: dp.username,
-            nama: dp.nama,
-            gedung: dp.gedung,
-            lantai: dp.lantai,
-            jabatan: dp.jabatan,
-          });
-        }
       });
 
       setPengurusList(combined);

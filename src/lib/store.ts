@@ -513,7 +513,10 @@ export const MahadStore = {
 
   deleteSKPengurus(id: string) {
     const list = this.getSKPengurusList().filter((p) => p.id !== id);
-    this.saveSKPengurusList(list);
+    this.saveSKPengurusLocally(list);
+    if (isSupabaseConfigured()) {
+      supabase.from('sk_pengurus').delete().eq('id', id).then(() => {});
+    }
   },
 
   resetPengurusPassword(id: string, newPass: string) {
