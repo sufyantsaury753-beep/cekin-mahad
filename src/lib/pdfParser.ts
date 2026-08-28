@@ -106,10 +106,10 @@ function parsePageLines(items: any[], records: SKMahasantri[]) {
 
 function parseRowText(text: string): SKMahasantri | null {
   const clean = text.replace(/\s+/g, ' ').trim();
+  if (!clean || clean.length < 10) return null;
 
-  // Pattern 1: Standar Nasional (NISN/NIM)
-  // Regex matches: NO, Nama, JK (L/P), NIM/NISN (6-16 digits or alphanumeric), Jenis, Fakultas, Jurusan
-  const nationalRegex = /^(\d+)\s+([A-Za-z\s'\.]+?)\s+([LP])\s+([0-9]{6,16}|[A-Z0-9\/-]{6,20})\s+(Calon Mahasantri Baru|Perpanjangan|Calon Santri Mahad Baru)\s+([A-Z]{3,5})\s+(.+)$/i;
+  // Pattern 1: Standar Nasional (NO Nama JK NIM/NISN Jenis Fakultas Jurusan)
+  const nationalRegex = /^(\d+)\s+([A-Za-z\s'\.\,`\-]+?)\s+([LP])\s+([0-9]{6,16}|[A-Z0-9\/-]{6,20})\s+(Calon Mahasantri Baru|Perpanjangan|Calon Santri Mahad Baru|Maba|Santri Baru)\s+([A-Z]{2,6})\s+(.+)$/i;
   const matchNat = clean.match(nationalRegex);
 
   if (matchNat) {
@@ -117,7 +117,7 @@ function parseRowText(text: string): SKMahasantri | null {
     const nama = matchNat[2].trim();
     const jk = matchNat[3].toUpperCase() as Gender;
     const nimNisn = matchNat[4].trim();
-    const jenis = matchNat[5].includes('Perpanjangan')
+    const jenis = matchNat[5].toLowerCase().includes('perpanjangan')
       ? 'Perpanjangan'
       : 'Calon Mahasantri Baru';
     const fakultas = matchNat[6].toUpperCase().trim();
@@ -136,9 +136,8 @@ function parseRowText(text: string): SKMahasantri | null {
     };
   }
 
-  // Pattern 2: Mahasantri Internasional
-  // Format: NO | NAMA | JK | ASAL NEGARA | Jenis | Fakultas | Jurusan
-  const intlRegex = /^(\d+)\s+([A-Za-z\s'\.]+?)\s+([LP])\s+([A-Za-z\s]+?)\s+(Perpanjangan|Calon Mahasantri)\s+([A-Z]{3,5})\s+(.+)$/i;
+  // Pattern 2: Mahasantri Internasional (NO NAMA JK ASAL_NEGARA Jenis Fakultas Jurusan)
+  const intlRegex = /^(\d+)\s+([A-Za-z\s'\.\,`\-]+?)\s+([LP])\s+([A-Za-z\s]+?)\s+(Perpanjangan|Calon Mahasantri|Internasional)\s+([A-Z]{2,6})\s+(.+)$/i;
   const matchIntl = clean.match(intlRegex);
 
   if (matchIntl) {
@@ -160,6 +159,29 @@ function parseRowText(text: string): SKMahasantri | null {
       fakultas,
       jurusan,
       isInternasional: true,
+      skNomor: SK_INFO.nomor,
+    };
+  }
+
+  // Pattern 3: Flexible Fallback (NO Nama JK NIM/NISN ...)
+  const flexibleRegex = /^(\d+)\s+([A-Za-z\s'\.\,`\-]+?)\s+([LP])\s+([0-9]{8,16})\s+(.+)$/i;
+  const matchFlex = clean.match(flexibleRegex);
+  if (matchFlex) {
+    const no = parseInt(matchFlex[1], 10);
+    const nama = matchFlex[2].trim();
+    const jk = matchFlex[3].toUpperCase() as Gender;
+    const nimNisn = matchFlex[4].trim();
+    const rest = matchFlex[5].trim();
+
+    return {
+      no,
+      nimNisn,
+      nama,
+      jenisKelamin: jk,
+      jenisPendaftaran: 'Calon Mahasantri Baru',
+      fakultas: rest.includes('FASYA') ? 'FASYA' : rest.includes('FUAD') ? 'FUAD' : rest.includes('FDKI') ? 'FDKI' : rest.includes('FEB') ? 'FEB' : 'FITK',
+      jurusan: rest,
+      isInternasional: false,
       skNomor: SK_INFO.nomor,
     };
   }

@@ -73,10 +73,13 @@ function AdminDashboardContent() {
   const [selectedRoomForCapacity, setSelectedRoomForCapacity] = useState<Kamar | null>(null);
   const [newCapacityInput, setNewCapacityInput] = useState<number>(4);
 
-  // SK Master Data Search & Filters
+  // SK Master Data Search, Filters & Pagination
   const [skSearchQuery, setSkSearchQuery] = useState('');
   const [skFilterBooking, setSkFilterBooking] = useState<'ALL' | 'BOOKED' | 'UNBOOKED'>('ALL');
   const [skFilterJenis, setSkFilterJenis] = useState<'ALL' | 'MABA' | 'PERPANJANGAN' | 'INTERNASIONAL'>('ALL');
+  const [skGenderFilter, setSkGenderFilter] = useState<'ALL' | 'L' | 'P'>('ALL');
+  const [skPage, setSkPage] = useState(1);
+  const [skPerPage, setSkPerPage] = useState<number | 'ALL'>(100);
 
   // SK Mudabbir/Pengurus Form & Modal
   const [showAddPengurusModal, setShowAddPengurusModal] = useState(false);
@@ -804,31 +807,66 @@ function AdminDashboardContent() {
       {activeTab === 'SK_MASTER' && (
         <div className="space-y-6">
           
+          {/* Search, Filter & Per Page Controls */}
           <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-xs flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
             
             <div className="relative flex-1 w-full md:max-w-md">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Cari Nama atau NIM/NISN di SK..."
+                placeholder="Cari Nama, NIM/NISN, Prodi, atau Fakultas..."
                 value={skSearchQuery}
-                onChange={(e) => setSkSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSkSearchQuery(e.target.value);
+                  setSkPage(1);
+                }}
                 className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-uin-primary/20 outline-none"
               />
             </div>
 
-            <div className="flex flex-wrap gap-2 w-full md:w-auto">
+            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+              
+              {/* Gender Filter */}
+              <select
+                value={skGenderFilter}
+                onChange={(e) => {
+                  setSkGenderFilter(e.target.value as any);
+                  setSkPage(1);
+                }}
+                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none"
+              >
+                <option value="ALL">Semua Gender</option>
+                <option value="L">👦 Khusus Putra (L)</option>
+                <option value="P">🧕 Khusus Putri (P)</option>
+              </select>
+
+              {/* Rows Per Page */}
+              <select
+                value={skPerPage === 'ALL' ? 'ALL' : String(skPerPage)}
+                onChange={(e) => {
+                  setSkPerPage(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value));
+                  setSkPage(1);
+                }}
+                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none"
+              >
+                <option value="50">50 per hal</option>
+                <option value="100">100 per hal</option>
+                <option value="250">250 per hal</option>
+                <option value="500">500 per hal</option>
+                <option value="ALL">Tampilkan Semua ({skList.length} Data)</option>
+              </select>
+
               <button
                 onClick={() => setShowUploadModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-uin-primary hover:bg-uin-secondary text-white rounded-xl text-xs font-bold shadow transition-all"
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-uin-primary hover:bg-uin-secondary text-white rounded-xl text-xs font-bold shadow transition-all"
               >
                 <FileUp className="w-4 h-4" />
-                <span>Upload SK Dokumen (PDF)</span>
+                <span>Upload SK (PDF)</span>
               </button>
 
               <button
                 onClick={() => setShowAddSkModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold shadow transition-all"
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold shadow transition-all"
               >
                 <Plus className="w-4 h-4" />
                 <span>Tambah Manual</span>
@@ -838,76 +876,185 @@ function AdminDashboardContent() {
           </div>
 
           {/* Table SK Mahasantri */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
-                  <tr>
-                    <th className="py-3.5 px-4">No</th>
-                    <th className="py-3.5 px-4">Identitas Mahasantri</th>
-                    <th className="py-3.5 px-4">Gender &amp; Jalur</th>
-                    <th className="py-3.5 px-4">Fakultas / Prodi</th>
-                    <th className="py-3.5 px-4">Status Akun PIN</th>
-                    <th className="py-3.5 px-4 text-center">Aksi Helpdesk</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {skList
-                    .filter((s) => {
-                      const matchQuery =
-                        !skSearchQuery ||
-                        s.nama.toLowerCase().includes(skSearchQuery.toLowerCase()) ||
-                        s.nimNisn.toLowerCase().includes(skSearchQuery.toLowerCase());
-                      return matchQuery;
-                    })
-                    .slice(0, 100)
-                    .map((item, idx) => (
-                      <tr key={item.nimNisn} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="py-3.5 px-4 font-bold text-slate-400">{idx + 1}</td>
-                        <td className="py-3.5 px-4">
-                          <div className="font-bold text-slate-900 text-sm">{item.nama}</div>
-                          <div className="font-mono text-emerald-800 text-[11px]">NIM/NISN: {item.nimNisn}</div>
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                            item.jenisKelamin === 'L' ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800'
-                          }`}>
-                            {item.jenisKelamin === 'L' ? '👦 Putra' : '🧕 Putri'}
-                          </span>
-                          <div className="text-[10px] text-slate-500 mt-0.5">{item.jenisPendaftaran}</div>
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <div className="font-semibold text-slate-700">{item.jurusan}</div>
-                          <div className="text-[10px] text-slate-400">{item.fakultas}</div>
-                        </td>
-                        <td className="py-3.5 px-4">
-                          {item.pin ? (
-                            <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-bold text-[10px]">
-                              <ShieldCheck className="w-3 h-3" />
-                              PIN Aktif
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 bg-slate-200 text-slate-600 px-2 py-0.5 rounded-md font-semibold text-[10px]">
-                              Belum Aktivasi
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-3.5 px-4 text-center">
-                          {item.pin && (
+          {(() => {
+            const filteredSkList = skList.filter((s) => {
+              const matchQuery =
+                !skSearchQuery ||
+                s.nama.toLowerCase().includes(skSearchQuery.toLowerCase()) ||
+                s.nimNisn.toLowerCase().includes(skSearchQuery.toLowerCase()) ||
+                s.jurusan.toLowerCase().includes(skSearchQuery.toLowerCase()) ||
+                s.fakultas.toLowerCase().includes(skSearchQuery.toLowerCase());
+              const matchGender = skGenderFilter === 'ALL' || s.jenisKelamin === skGenderFilter;
+              return matchQuery && matchGender;
+            });
+
+            const totalFiltered = filteredSkList.length;
+            const perPageNum = skPerPage === 'ALL' ? totalFiltered : skPerPage;
+            const totalPages = skPerPage === 'ALL' ? 1 : Math.max(1, Math.ceil(totalFiltered / perPageNum));
+            const currentPage = Math.min(Math.max(1, skPage), totalPages);
+            const startIdx = (currentPage - 1) * perPageNum;
+            const endIdx = skPerPage === 'ALL' ? totalFiltered : Math.min(startIdx + perPageNum, totalFiltered);
+            const displayedSkList = filteredSkList.slice(startIdx, endIdx);
+
+            return (
+              <div className="space-y-4">
+                
+                {/* Information Header */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 px-1 text-xs text-slate-600 font-medium">
+                  <div>
+                    Menampilkan <strong className="text-slate-900 font-bold">{totalFiltered > 0 ? startIdx + 1 : 0} - {endIdx}</strong> dari total <strong className="text-uin-primary font-bold">{totalFiltered} Mahasantri</strong> di SK resmi (Total Master: {skList.length})
+                  </div>
+                  {totalPages > 1 && (
+                    <div className="text-slate-500 font-semibold">
+                      Halaman <span className="text-slate-900 font-bold">{currentPage}</span> dari {totalPages}
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
+                        <tr>
+                          <th className="py-3.5 px-4">No</th>
+                          <th className="py-3.5 px-4">Identitas Mahasantri</th>
+                          <th className="py-3.5 px-4">Gender &amp; Jalur</th>
+                          <th className="py-3.5 px-4">Fakultas / Prodi</th>
+                          <th className="py-3.5 px-4">Status Akun PIN</th>
+                          <th className="py-3.5 px-4 text-center">Aksi Helpdesk</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {displayedSkList.length === 0 ? (
+                          <tr>
+                            <td colSpan={6} className="py-12 text-center text-slate-400 font-medium">
+                              Tidak ada data mahasantri yang cocok dengan pencarian.
+                            </td>
+                          </tr>
+                        ) : (
+                          displayedSkList.map((item, idx) => (
+                            <tr key={item.nimNisn} className="hover:bg-slate-50/80 transition-colors">
+                              <td className="py-3.5 px-4 font-bold text-slate-400">{startIdx + idx + 1}</td>
+                              <td className="py-3.5 px-4">
+                                <div className="font-bold text-slate-900 text-sm">{item.nama}</div>
+                                <div className="font-mono text-emerald-800 text-[11px]">NIM/NISN: {item.nimNisn}</div>
+                              </td>
+                              <td className="py-3.5 px-4">
+                                <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                  item.jenisKelamin === 'L' ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800'
+                                }`}>
+                                  {item.jenisKelamin === 'L' ? '👦 Putra' : '🧕 Putri'}
+                                </span>
+                                <div className="text-[10px] text-slate-500 mt-0.5">{item.jenisPendaftaran}</div>
+                              </td>
+                              <td className="py-3.5 px-4">
+                                <div className="font-semibold text-slate-700">{item.jurusan}</div>
+                                <div className="text-[10px] text-slate-400">{item.fakultas}</div>
+                              </td>
+                              <td className="py-3.5 px-4">
+                                {item.pin ? (
+                                  <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-bold text-[10px]">
+                                    <ShieldCheck className="w-3 h-3" />
+                                    PIN Aktif
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 bg-slate-200 text-slate-600 px-2 py-0.5 rounded-md font-semibold text-[10px]">
+                                    Belum Aktivasi
+                                  </span>
+                                )}
+                              </td>
+                              <td className="py-3.5 px-4 text-center">
+                                {item.pin && (
+                                  <button
+                                    onClick={() => handleResetPin(item.nimNisn, item.nama)}
+                                    className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-[10px] font-bold transition-all"
+                                  >
+                                    Reset PIN
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                    <div className="text-xs text-slate-500 font-medium">
+                      Halaman {currentPage} dari {totalPages}
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        disabled={currentPage <= 1}
+                        onClick={() => setSkPage(1)}
+                        className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-xs"
+                      >
+                        &laquo; Pertama
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={currentPage <= 1}
+                        onClick={() => setSkPage((p) => Math.max(1, p - 1))}
+                        className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-xs"
+                      >
+                        &lsaquo; Sebelumnya
+                      </button>
+
+                      <div className="flex items-center gap-1 px-2">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          let pageNum = currentPage - 2 + i;
+                          if (pageNum < 1) pageNum = i + 1;
+                          if (pageNum > totalPages) pageNum = totalPages - 4 + i;
+                          if (pageNum < 1 || pageNum > totalPages) return null;
+
+                          return (
                             <button
-                              onClick={() => handleResetPin(item.nimNisn, item.nama)}
-                              className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-[10px] font-bold transition-all"
+                              key={pageNum}
+                              type="button"
+                              onClick={() => setSkPage(pageNum)}
+                              className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${
+                                currentPage === pageNum
+                                  ? 'bg-uin-primary text-white shadow-sm'
+                                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                              }`}
                             >
-                              Reset PIN
+                              {pageNum}
                             </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                          );
+                        })}
+                      </div>
+
+                      <button
+                        type="button"
+                        disabled={currentPage >= totalPages}
+                        onClick={() => setSkPage((p) => Math.min(totalPages, p + 1))}
+                        className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-xs"
+                      >
+                        Berikutnya &rsaquo;
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={currentPage >= totalPages}
+                        onClick={() => setSkPage(totalPages)}
+                        className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-xs"
+                      >
+                        Terakhir &raquo;
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            );
+          })()}
 
         </div>
       )}
