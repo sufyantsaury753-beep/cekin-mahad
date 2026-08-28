@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { MahadStore } from '@/lib/store';
+import { MahadStore, MahadAuth } from '@/lib/store';
 import { Mahasantri } from '@/lib/types';
 import BoardingPassCard from '@/components/ticket/BoardingPassCard';
 import Link from 'next/link';
@@ -25,10 +25,38 @@ export default function DetailTiketClient({ nimNisn }: DetailTiketClientProps) {
     }
   }, [nimNisn]);
 
+  const session = typeof window !== 'undefined' ? MahadAuth.getSession() : null;
+  const isMahasantriSession = session && session.role === 'MAHASANTRI';
+  const isViewingSelf = isMahasantriSession && session.identifier.toLowerCase() === decodeURIComponent(nimNisn).toLowerCase();
+  const isAuthorized = !isMahasantriSession || isViewingSelf;
+
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto py-20 text-center text-slate-500 text-sm">
         Memuat E-Tiket Mahasantri...
+      </div>
+    );
+  }
+
+  // Jika mahasantri mencoba membuka tiket santri lain
+  if (isMahasantriSession && !isViewingSelf) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center space-y-4">
+        <div className="w-14 h-14 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+          <AlertCircle className="w-7 h-7" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-800">Akses Tiket Dibatasi</h2>
+        <p className="text-xs text-slate-500">
+          Demi privasi dan keamanan data, Anda hanya memiliki hak akses untuk melihat E-Tiket atas nama Anda sendiri (<strong>{session.name}</strong>).
+        </p>
+        <div className="pt-3">
+          <Link
+            href="/tiket"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-uin-primary text-white text-xs font-bold rounded-xl hover:bg-uin-secondary shadow-md transition-all"
+          >
+            <span>Buka E-Tiket Saya</span>
+          </Link>
+        </div>
       </div>
     );
   }
@@ -48,7 +76,7 @@ export default function DetailTiketClient({ nimNisn }: DetailTiketClientProps) {
             href="/tiket"
             className="px-5 py-2.5 bg-slate-800 text-white text-xs font-semibold rounded-xl hover:bg-slate-900"
           >
-            Cari Ulang NIM / NISN
+            Kembali ke E-Tiket
           </Link>
           <Link
             href="/daftar"
@@ -64,25 +92,27 @@ export default function DetailTiketClient({ nimNisn }: DetailTiketClientProps) {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       
-      {/* Back Button */}
-      <div className="flex items-center justify-between no-print">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-900 bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-sm"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Kembali</span>
-        </button>
-
-        <div className="flex items-center gap-2">
-          <Link
-            href="/tiket"
-            className="text-xs text-slate-500 hover:text-slate-800 font-semibold"
+      {/* Back Button (Only for Admin/Pengurus/Guest) */}
+      {!isMahasantriSession && (
+        <div className="flex items-center justify-between no-print">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-900 bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-sm"
           >
-            Cari E-Tiket Lain
-          </Link>
+            <ArrowLeft className="w-4 h-4" />
+            <span>Kembali</span>
+          </button>
+
+          <div className="flex items-center gap-2">
+            <Link
+              href="/tiket"
+              className="text-xs text-slate-500 hover:text-slate-800 font-semibold"
+            >
+              Cari E-Tiket Lain
+            </Link>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Boarding Pass Ticket Card */}
       <BoardingPassCard mahasantri={mahasantri} />
