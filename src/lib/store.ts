@@ -576,51 +576,75 @@ export const MahadAuth = {
     const cleanUser = usernameOrId.trim().toLowerCase();
     const cleanPass = password.trim();
 
+    if (!cleanUser) {
+      return { success: false, error: 'Masukkan Nama, ID SK, NIM, atau No. WA Pengurus!' };
+    }
+
     // Check dynamic SK Pengurus list first
     const skPengurusList = MahadStore.getSKPengurusList();
-    const skPengurus = skPengurusList.find(
-      (p) =>
-        p.id.toLowerCase() === cleanUser ||
-        (p.nim && p.nim.toLowerCase() === cleanUser) ||
-        p.nama.toLowerCase().includes(cleanUser)
-    );
+    const skPengurus = skPengurusList.find((p) => {
+      const matchId = p.id.toLowerCase() === cleanUser;
+      const matchNim = p.nim && p.nim.toLowerCase() === cleanUser;
+      const matchNama =
+        p.nama.toLowerCase() === cleanUser ||
+        p.nama.toLowerCase().includes(cleanUser) ||
+        cleanUser.includes(p.nama.toLowerCase());
+      const matchWa = p.noWa && p.noWa.replace(/\D/g, '') === cleanUser.replace(/\D/g, '');
+      return matchId || matchNim || matchNama || matchWa;
+    });
 
-    if (skPengurus && skPengurus.password === cleanPass) {
-      const session: UserSession = {
-        role: 'PENGURUS',
-        name: skPengurus.nama,
-        identifier: skPengurus.id,
-        floorAssigned: skPengurus.lantai,
-        gedungAssigned: skPengurus.gedung,
-        pengurusData: skPengurus,
-        token: `AUTH-PGR-${skPengurus.id}-${Date.now()}`,
-      };
-      this.setSession(session);
-      return { success: true, session };
+    if (skPengurus) {
+      const expectedPass = (skPengurus.password || 'mahad2026').trim();
+      if (cleanPass === expectedPass) {
+        const session: UserSession = {
+          role: 'PENGURUS',
+          name: skPengurus.nama,
+          identifier: skPengurus.id,
+          floorAssigned: skPengurus.lantai,
+          gedungAssigned: skPengurus.gedung,
+          pengurusData: skPengurus,
+          token: `AUTH-PGR-${skPengurus.id}-${Date.now()}`,
+        };
+        this.setSession(session);
+        return { success: true, session };
+      } else {
+        return { success: false, error: `Password salah untuk pengurus "${skPengurus.nama}"!` };
+      }
     }
 
     // Fallback: check DEFAULT_PENGURUS_LIST
-    const defaultAcc = DEFAULT_PENGURUS_LIST.find(
-      (p) =>
-        p.username.toLowerCase() === cleanUser ||
-        p.id.toLowerCase() === cleanUser ||
-        p.nama.toLowerCase().includes(cleanUser)
-    );
+    const defaultAcc = DEFAULT_PENGURUS_LIST.find((p) => {
+      const matchUsername = p.username.toLowerCase() === cleanUser;
+      const matchId = p.id.toLowerCase() === cleanUser;
+      const matchNama =
+        p.nama.toLowerCase() === cleanUser ||
+        p.nama.toLowerCase().includes(cleanUser) ||
+        cleanUser.includes(p.nama.toLowerCase());
+      return matchUsername || matchId || matchNama;
+    });
 
-    if (defaultAcc && defaultAcc.password === cleanPass) {
-      const session: UserSession = {
-        role: 'PENGURUS',
-        name: defaultAcc.nama,
-        identifier: defaultAcc.username,
-        floorAssigned: defaultAcc.lantai,
-        gedungAssigned: defaultAcc.gedung,
-        token: `AUTH-PGR-${defaultAcc.id}-${Date.now()}`,
-      };
-      this.setSession(session);
-      return { success: true, session };
+    if (defaultAcc) {
+      const expectedPass = (defaultAcc.password || 'mahad2026').trim();
+      if (cleanPass === expectedPass) {
+        const session: UserSession = {
+          role: 'PENGURUS',
+          name: defaultAcc.nama,
+          identifier: defaultAcc.username,
+          floorAssigned: defaultAcc.lantai,
+          gedungAssigned: defaultAcc.gedung,
+          token: `AUTH-PGR-${defaultAcc.id}-${Date.now()}`,
+        };
+        this.setSession(session);
+        return { success: true, session };
+      } else {
+        return { success: false, error: `Password salah untuk pengurus "${defaultAcc.nama}"!` };
+      }
     }
 
-    return { success: false, error: 'Username atau Password Pengurus / Mudabbir salah!' };
+    return {
+      success: false,
+      error: `Akun "${usernameOrId}" tidak ditemukan. Anda dapat login dengan mengetik Nama (misal: "Raihan"), NIM, ID SK, atau No. WhatsApp.`,
+    };
   },
 
   // Check if Mahasantri PIN is created

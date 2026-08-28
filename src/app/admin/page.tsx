@@ -1109,6 +1109,7 @@ function AdminDashboardContent() {
                 <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
                   <tr>
                     <th className="py-3.5 px-4">Nama Pengurus / Mudabbir</th>
+                    <th className="py-3.5 px-4">Kredensial Login (ID &amp; Pass)</th>
                     <th className="py-3.5 px-4">Jabatan &amp; Gender</th>
                     <th className="py-3.5 px-4">Penugasan Gedung &amp; Lantai</th>
                     <th className="py-3.5 px-4">Kamar Khusus Mudabbir</th>
@@ -1122,6 +1123,13 @@ function AdminDashboardContent() {
                       <td className="py-3.5 px-4">
                         <div className="font-bold text-slate-900 text-sm">{p.nama}</div>
                         <div className="text-[10px] text-slate-400 font-mono">ID: {p.id} {p.nim ? `| NIM: ${p.nim}` : ''}</div>
+                      </td>
+
+                      <td className="py-3.5 px-4">
+                        <div className="font-mono text-emerald-800 text-[11px] font-bold">User: {p.id}</div>
+                        <div className="font-mono text-slate-500 text-[10px] mt-0.5">
+                          Pass: <span className="bg-slate-100 px-1.5 py-0.5 rounded font-bold text-slate-800">{p.password || 'mahad2026'}</span>
+                        </div>
                       </td>
 
                       <td className="py-3.5 px-4">
