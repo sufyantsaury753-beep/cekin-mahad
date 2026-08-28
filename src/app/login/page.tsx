@@ -56,41 +56,49 @@ function LoginForm() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Load all dynamic and default Pengurus into dropdown list
+  // Load all dynamic and default Pengurus into dropdown list & init Supabase sync
   useEffect(() => {
-    const dynamic = MahadStore.getSKPengurusList();
-    const combined: Array<{ id: string; username: string; nama: string; gedung: string; lantai: number; jabatan?: string }> = [];
+    MahadStore.initSupabaseSync();
 
-    // 1. Add all dynamic pengurus (including newly added ones like Raihan, Han, etc.)
-    dynamic.forEach((p) => {
-      combined.push({
-        id: p.id,
-        username: p.id,
-        nama: p.nama,
-        gedung: p.gedung,
-        lantai: p.lantai,
-        jabatan: p.jabatan,
-      });
-    });
+    const loadPengurus = () => {
+      const dynamic = MahadStore.getSKPengurusList();
+      const combined: Array<{ id: string; username: string; nama: string; gedung: string; lantai: number; jabatan?: string }> = [];
 
-    // 2. Add default pengurus if not already in list
-    DEFAULT_PENGURUS_LIST.forEach((dp) => {
-      if (!combined.some((c) => c.username === dp.username || c.id === dp.id || c.nama === dp.nama)) {
+      // 1. Add all dynamic pengurus (including newly added ones like Raihan, Han, etc.)
+      dynamic.forEach((p) => {
         combined.push({
-          id: dp.id,
-          username: dp.username,
-          nama: dp.nama,
-          gedung: dp.gedung,
-          lantai: dp.lantai,
-          jabatan: dp.jabatan,
+          id: p.id,
+          username: p.id,
+          nama: p.nama,
+          gedung: p.gedung,
+          lantai: p.lantai,
+          jabatan: p.jabatan,
         });
-      }
-    });
+      });
 
-    setPengurusList(combined);
-    if (combined.length > 0) {
-      setPgrUsername(combined[0].username || combined[0].id);
-    }
+      // 2. Add default pengurus if not already in list
+      DEFAULT_PENGURUS_LIST.forEach((dp) => {
+        if (!combined.some((c) => c.username === dp.username || c.id === dp.id || c.nama === dp.nama)) {
+          combined.push({
+            id: dp.id,
+            username: dp.username,
+            nama: dp.nama,
+            gedung: dp.gedung,
+            lantai: dp.lantai,
+            jabatan: dp.jabatan,
+          });
+        }
+      });
+
+      setPengurusList(combined);
+      if (combined.length > 0) {
+        setPgrUsername(combined[0].username || combined[0].id);
+      }
+    };
+
+    loadPengurus();
+    window.addEventListener('mahad_sk_pengurus_updated', loadPengurus);
+    return () => window.removeEventListener('mahad_sk_pengurus_updated', loadPengurus);
   }, []);
 
   // Check if already logged in
@@ -104,7 +112,7 @@ function LoginForm() {
   }, [router, redirectParam]);
 
   // Handle Step 1: Mahasantri checks NISN
-  const handleCheckMahasantri = (e: React.FormEvent) => {
+  const handleCheckMahasantri = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     if (!mhsNimNisn.trim()) {
@@ -113,7 +121,7 @@ function LoginForm() {
     }
 
     setLoading(true);
-    const check = MahadAuth.checkMahasantriLogin(mhsNimNisn.trim());
+    const check = await MahadAuth.checkMahasantriLogin(mhsNimNisn.trim());
     setLoading(false);
 
     if (!check.found || !check.skData) {

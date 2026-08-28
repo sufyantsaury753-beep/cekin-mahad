@@ -122,7 +122,49 @@ export const MahadStore = {
       }
     });
 
-    // 3. Realtime Subscription (Anti-Bentrok Kasur)
+    // 3. Sync SK Mahasantri from Supabase
+    supabase.from('sk_mahasantri').select('*').then(({ data, error }) => {
+      if (!error && data && data.length > 0) {
+        const mapped: SKMahasantri[] = data.map((item: any) => ({
+          nimNisn: item.nim_nisn,
+          no: item.no,
+          nama: item.nama,
+          jenisKelamin: item.jenis_kelamin as Gender,
+          jenisPendaftaran: item.jenis_pendaftaran as JenisPendaftaran,
+          fakultas: item.fakultas,
+          jurusan: item.jurusan,
+          isInternasional: item.is_internasional || false,
+          asalNegara: item.asal_negara || undefined,
+          skNomor: item.sk_nomor || 'SK-01/2026',
+          pin: item.pin || undefined,
+          noWaRegistered: item.no_wa || undefined,
+        }));
+        this.saveSKListLocally(mapped);
+      }
+    });
+
+    // 4. Sync SK Pengurus from Supabase
+    supabase.from('sk_pengurus').select('*').then(({ data, error }) => {
+      if (!error && data && data.length > 0) {
+        const mapped: SKPengurus[] = data.map((item: any) => ({
+          id: item.id,
+          nama: item.nama,
+          nim: item.nim || undefined,
+          jenisKelamin: item.jenis_kelamin as Gender,
+          jabatan: item.jabatan,
+          gedung: item.gedung as GedungType,
+          lantai: item.lantai,
+          kamarKhusus: item.kamar_khusus || undefined,
+          noWa: item.no_wa,
+          password: item.password,
+          isAktif: item.is_aktif ?? true,
+          skNomor: item.sk_nomor || 'SK-PENGURUS/2026',
+        }));
+        this.saveSKPengurusLocally(mapped);
+      }
+    });
+
+    // 5. Realtime Subscription (Anti-Bentrok Kasur & Live SK Sync)
     try {
       supabase
         .channel('mahad_channel_all')
@@ -189,6 +231,60 @@ export const MahadStore = {
               currentMhs.unshift(updatedMhs);
             }
             this.saveMahasantriLocally(currentMhs);
+          }
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'sk_mahasantri' }, (payload) => {
+          if (payload.new && (payload.new as any).nim_nisn) {
+            const item = payload.new as any;
+            const currentSK = this.getSKList();
+            const idx = currentSK.findIndex((x) => x.nimNisn.toLowerCase() === item.nim_nisn.toLowerCase());
+            const updatedItem: SKMahasantri = {
+              nimNisn: item.nim_nisn,
+              no: item.no,
+              nama: item.nama,
+              jenisKelamin: item.jenis_kelamin as Gender,
+              jenisPendaftaran: item.jenis_pendaftaran as JenisPendaftaran,
+              fakultas: item.fakultas,
+              jurusan: item.jurusan,
+              isInternasional: item.is_internasional || false,
+              asalNegara: item.asal_negara || undefined,
+              skNomor: item.sk_nomor || 'SK-01/2026',
+              pin: item.pin || undefined,
+              noWaRegistered: item.no_wa || undefined,
+            };
+            if (idx >= 0) {
+              currentSK[idx] = updatedItem;
+            } else {
+              currentSK.push(updatedItem);
+            }
+            this.saveSKListLocally(currentSK);
+          }
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'sk_pengurus' }, (payload) => {
+          if (payload.new && (payload.new as any).id) {
+            const item = payload.new as any;
+            const currentPgr = this.getSKPengurusList();
+            const idx = currentPgr.findIndex((x) => x.id === item.id);
+            const updatedPgr: SKPengurus = {
+              id: item.id,
+              nama: item.nama,
+              nim: item.nim || undefined,
+              jenisKelamin: item.jenis_kelamin as Gender,
+              jabatan: item.jabatan,
+              gedung: item.gedung as GedungType,
+              lantai: item.lantai,
+              kamarKhusus: item.kamar_khusus || undefined,
+              noWa: item.no_wa,
+              password: item.password,
+              isAktif: item.is_aktif ?? true,
+              skNomor: item.sk_nomor || 'SK-PENGURUS/2026',
+            };
+            if (idx >= 0) {
+              currentPgr[idx] = updatedPgr;
+            } else {
+              currentPgr.push(updatedPgr);
+            }
+            this.saveSKPengurusLocally(currentPgr);
           }
         })
         .subscribe();
@@ -373,7 +469,7 @@ export const MahadStore = {
     }
   },
 
-  saveSKPengurusList(list: SKPengurus[]) {
+  saveSKPengurusLocally(list: SKPengurus[]) {
     if (typeof window === 'undefined') return;
     try {
       localStorage.setItem(SK_PENGURUS_KEY, JSON.stringify(list));
@@ -381,6 +477,27 @@ export const MahadStore = {
       console.warn('saveSKPengurusList storage error:', e);
     }
     window.dispatchEvent(new CustomEvent('mahad_sk_pengurus_updated', { detail: list }));
+  },
+
+  saveSKPengurusList(list: SKPengurus[]) {
+    this.saveSKPengurusLocally(list);
+    if (isSupabaseConfigured()) {
+      const rows = list.map((item) => ({
+        id: item.id,
+        nama: item.nama,
+        nim: item.nim || null,
+        jenis_kelamin: item.jenisKelamin,
+        jabatan: item.jabatan,
+        gedung: item.gedung,
+        lantai: item.lantai,
+        kamar_khusus: item.kamarKhusus || null,
+        no_wa: item.noWa,
+        password: item.password,
+        is_aktif: item.isAktif ?? true,
+        sk_nomor: item.skNomor || 'SK-PENGURUS/2026',
+      }));
+      supabase.from('sk_pengurus').upsert(rows).then(() => {});
+    }
   },
 
   addSKPengurus(pengurus: SKPengurus) {
@@ -903,9 +1020,62 @@ export const MahadAuth = {
     };
   },
 
-  // Check if Mahasantri PIN is created
-  checkMahasantriLogin(nimNisn: string) {
-    return this.checkMahasantriAccount(nimNisn);
+  // Check if Mahasantri PIN is created (with Live Supabase Fallback)
+  async checkMahasantriLogin(nimNisn: string): Promise<{
+    found: boolean;
+    isPinSet: boolean;
+    skData?: SKMahasantri;
+    mhsData?: Mahasantri;
+    error?: string;
+  }> {
+    const cleanNim = nimNisn.trim();
+    // 1. Try local memory/localStorage
+    const local = this.checkMahasantriAccount(cleanNim);
+    if (local.found) return local;
+
+    // 2. Query direct to Supabase if not found locally
+    if (isSupabaseConfigured()) {
+      try {
+        const { data, error } = await supabase
+          .from('sk_mahasantri')
+          .select('*')
+          .ilike('nim_nisn', cleanNim)
+          .maybeSingle();
+
+        if (!error && data) {
+          const skData: SKMahasantri = {
+            nimNisn: data.nim_nisn,
+            no: data.no,
+            nama: data.nama,
+            jenisKelamin: data.jenis_kelamin as Gender,
+            jenisPendaftaran: data.jenis_pendaftaran as JenisPendaftaran,
+            fakultas: data.fakultas,
+            jurusan: data.jurusan,
+            isInternasional: data.is_internasional || false,
+            asalNegara: data.asal_negara || undefined,
+            skNomor: data.sk_nomor || 'SK-01/2026',
+            pin: data.pin || undefined,
+            noWaRegistered: data.no_wa || undefined,
+          };
+          MahadStore.addSKMahasantri(skData);
+          const mhsData = MahadStore.getMahasantriByNimNisn(skData.nimNisn);
+          return {
+            found: true,
+            isPinSet: Boolean(skData.pin),
+            skData,
+            mhsData,
+          };
+        }
+      } catch (e) {
+        console.warn('Supabase fallback error:', e);
+      }
+    }
+
+    return {
+      found: false,
+      isPinSet: false,
+      error: `NIM / NISN "${cleanNim}" tidak ditemukan di Surat Keputusan (SK) resmi.`,
+    };
   },
 
   checkMahasantriAccount(nimNisn: string): {
@@ -916,7 +1086,8 @@ export const MahadAuth = {
     error?: string;
   } {
     const skList = MahadStore.getSKList();
-    const skData = skList.find((x) => x.nimNisn.toLowerCase() === nimNisn.trim().toLowerCase());
+    const clean = nimNisn.trim().toLowerCase();
+    const skData = skList.find((x) => x.nimNisn.toLowerCase() === clean);
 
     if (!skData) {
       return {

@@ -148,8 +148,8 @@ function DaftarPageContent() {
     return () => window.removeEventListener('mahad_rooms_updated', handleRoomUpdate);
   }, []);
 
-  // Handle Verify NIM / NISN with SK
-  const handleVerifyNIMNISN = () => {
+  // Handle Verify NIM / NISN with SK (with Live Supabase support)
+  const handleVerifyNIMNISN = async () => {
     setErrorMessage(null);
     setSkVerified(null);
 
@@ -159,30 +159,31 @@ function DaftarPageContent() {
     }
 
     setIsVerifying(true);
-    const check = MahadStore.checkSK(nimNisn.trim());
+    const loginCheck = await MahadAuth.checkMahasantriLogin(nimNisn.trim());
     setIsVerifying(false);
 
-    if (!check.isAllowed || !check.data) {
-      setErrorMessage(check.error || 'NIM / NISN tidak terdaftar dalam SK Pengumuman.');
+    if (!loginCheck.found || !loginCheck.skData) {
+      setErrorMessage(loginCheck.error || 'NIM / NISN tidak terdaftar dalam SK Pengumuman.');
       return;
     }
 
-    if (check.alreadyRegistered) {
+    const mhsAlready = MahadStore.getMahasantriByNimNisn(loginCheck.skData.nimNisn);
+    if (mhsAlready) {
       setErrorMessage(
-        `NIM/NISN ${nimNisn} (${check.alreadyRegistered.nama}) SUDAH memilih kamar sebelumnya (Kamar ${check.alreadyRegistered.nomorKamar} Bed ${check.alreadyRegistered.bedNumber}). Anda dapat langsung membuka E-Tiket Anda.`
+        `NIM/NISN ${nimNisn} (${mhsAlready.nama}) SUDAH memilih kamar sebelumnya (Kamar ${mhsAlready.nomorKamar} Bed ${mhsAlready.bedNumber}). Anda dapat langsung membuka E-Tiket Anda.`
       );
       return;
     }
 
     // Successfully verified in SK!
-    setSkVerified(check.data);
-    setNama(check.data.nama);
-    setFakultas(check.data.fakultas);
-    setJurusan(check.data.jurusan);
-    setJenisKelamin(check.data.jenisKelamin);
-    setJenisPendaftaran(check.data.jenisPendaftaran);
-    setIsInternasional(check.data.isInternasional);
-    setAsalNegara(check.data.asalNegara);
+    setSkVerified(loginCheck.skData);
+    setNama(loginCheck.skData.nama);
+    setFakultas(loginCheck.skData.fakultas);
+    setJurusan(loginCheck.skData.jurusan);
+    setJenisKelamin(loginCheck.skData.jenisKelamin);
+    setJenisPendaftaran(loginCheck.skData.jenisPendaftaran);
+    setIsInternasional(loginCheck.skData.isInternasional);
+    setAsalNegara(loginCheck.skData.asalNegara);
   };
 
   const handleSelectBed = (kamar: Kamar, bedNumber: number) => {
