@@ -1,5 +1,5 @@
 import { SKMahasantri, Gender, JenisPendaftaran } from './types';
-import { SK_INFO } from './constants';
+import { SK_INFO, getShortJurusan } from './constants';
 
 // Client-side PDF Parser for SK documents
 export async function parsePdfSK(file: File): Promise<{ success: boolean; data: SKMahasantri[]; error?: string }> {
@@ -130,7 +130,7 @@ function parseRowText(text: string): SKMahasantri | null {
       jenisKelamin: jk,
       jenisPendaftaran: jenis as JenisPendaftaran,
       fakultas,
-      jurusan,
+      jurusan: getShortJurusan(jurusan, fakultas),
       isInternasional: false,
       skNomor: SK_INFO.nomor,
     };
@@ -157,7 +157,7 @@ function parseRowText(text: string): SKMahasantri | null {
       jenisPendaftaran: 'Mahasantri Internasional',
       asalNegara,
       fakultas,
-      jurusan,
+      jurusan: getShortJurusan(jurusan, fakultas),
       isInternasional: true,
       skNomor: SK_INFO.nomor,
     };
@@ -172,6 +172,7 @@ function parseRowText(text: string): SKMahasantri | null {
     const jk = matchFlex[3].toUpperCase() as Gender;
     const nimNisn = matchFlex[4].trim();
     const rest = matchFlex[5].trim();
+    const fakultas = rest.includes('FASYA') ? 'FASYA' : rest.includes('FUAD') ? 'FUAD' : rest.includes('FDKI') ? 'FDKI' : rest.includes('FEB') ? 'FEB' : 'FITK';
 
     return {
       no,
@@ -179,8 +180,8 @@ function parseRowText(text: string): SKMahasantri | null {
       nama,
       jenisKelamin: jk,
       jenisPendaftaran: 'Calon Mahasantri Baru',
-      fakultas: rest.includes('FASYA') ? 'FASYA' : rest.includes('FUAD') ? 'FUAD' : rest.includes('FDKI') ? 'FDKI' : rest.includes('FEB') ? 'FEB' : 'FITK',
-      jurusan: rest,
+      fakultas,
+      jurusan: getShortJurusan(rest, fakultas),
       isInternasional: false,
       skNomor: SK_INFO.nomor,
     };

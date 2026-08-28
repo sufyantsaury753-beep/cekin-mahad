@@ -715,3 +715,67 @@ export const DEFAULT_PENGURUS_LIST = [
   },
 ];
 
+// Helper: Convert full Major name to standard recognized abbreviation / singkatan
+export function getShortJurusan(jurusan?: string, fakultas?: string): string {
+  if (!jurusan) return '-';
+  const clean = jurusan.trim().toUpperCase();
+
+  // If already a recognized short acronym (e.g. PAI, HKI, KPI, BKI, AFI, SPI, ESY, TBI, MPI, PIAUD)
+  if (clean.length <= 6 && !clean.includes(' ')) {
+    return clean;
+  }
+
+  // Handle broken "ISLAM" artifact from PDF line-wraps
+  if (clean === 'ISLAM') {
+    if (fakultas && (fakultas.includes('FDKI') || fakultas.includes('DAKWAH'))) return 'BKI / KPI';
+    if (fakultas && (fakultas.includes('FASYA') || fakultas.includes('SYARIAH'))) return 'HKI';
+    if (fakultas && (fakultas.includes('FUA') || fakultas.includes('USHULUDDIN'))) return 'SPI / AFI';
+    return 'PAI';
+  }
+
+  // Exact & Fuzzy Mapping for UIN Siber Syekh Nurjati Cirebon Majors
+  if (clean.includes('SEJARAH PERADABAN ISLAM') || clean === 'SPI') return 'SPI';
+  if ((clean.includes('KOMUNIKASI') && clean.includes('PENYIARAN')) || clean === 'KPI') return 'KPI';
+  if ((clean.includes('BIMBINGAN') && clean.includes('KONSELING')) || clean === 'BKI') return 'BKI';
+  if (clean.includes('PENGEMBANGAN MASYARAKAT') || clean === 'PMI') return 'PMI';
+  if (clean.includes('MANAJEMEN DAKWAH') || clean === 'MD') return 'MD';
+  
+  if (clean.includes('PENDIDIKAN AGAMA ISLAM') || clean === 'PAI') return 'PAI';
+  if (clean.includes('PENDIDIKAN BAHASA ARAB') || clean === 'PBA') return 'PBA';
+  if (clean.includes('MANAJEMEN PENDIDIKAN ISLAM') || clean === 'MPI') return 'MPI';
+  if (clean.includes('GURU MADRASAH IBTIDAIYAH') || clean.includes('PGMI')) return 'PGMI';
+  if (clean.includes('ANAK USIA DINI') || clean.includes('PIAUD')) return 'PIAUD';
+  if (clean.includes('BAHASA INGGRIS') || clean.includes('TBI')) return 'TBI';
+  if (clean.includes('MATEMATIKA')) return 'TMATH';
+  if (clean.includes('BIOLOGI') || clean.includes('TBIO')) return 'TBIO';
+  if (clean.includes('BAHASA INDONESIA')) return 'TBIND';
+  if (clean.includes('TADRIS IPS')) return 'TIPS';
+  if (clean.includes('KIMIA')) return 'TKIM';
+  if (clean.includes('FISIKA')) return 'TFIS';
+
+  if (clean.includes('HUKUM KELUARGA') || clean.includes('AHWAL')) return 'HKI';
+  if (clean.includes('HUKUM EKONOMI') || clean.includes('MUAMALAH') || clean === 'HES') return 'HES';
+  if (clean.includes('HUKUM TATA NEGARA') || clean.includes('SIYASAH') || clean === 'HTN') return 'HTN';
+  if (clean.includes('ILMU FALAK')) return 'IF';
+
+  if (clean.includes('QUR\'AN') || clean.includes('QURAN') || clean.includes('TAFSIR') || clean === 'IAT') return 'IAT';
+  if (clean.includes('HADIS') || clean.includes('HADITH') || clean === 'ILHA') return 'ILHA';
+  if (clean.includes('AQIDAH') || clean.includes('AKIDAH') || clean.includes('FILSAFAT') || clean === 'AFI') return 'AFI';
+  if (clean.includes('SASTRA ARAB') || clean === 'BSA') return 'BSA';
+  if (clean.includes('TASAWUF') || clean.includes('PSIKOTERAPI') || clean === 'TAPSI') return 'TAPSI';
+  if (clean.includes('STUDI AGAMA') || clean === 'SAA') return 'SAA';
+
+  if (clean.includes('EKONOMI SYARIAH') || clean === 'ESY') return 'ESY';
+  if (clean.includes('PERBANKAN SYARIAH') || clean === 'PBS') return 'PBS';
+  if (clean.includes('AKUNTANSI SYARIAH') || clean === 'AKSYAR') return 'AKSYAR';
+  if (clean.includes('ZAKAT') || clean.includes('WAKAF') || clean === 'MAZAWA') return 'MAZAWA';
+  if (clean.includes('PARIWISATA') || clean === 'PARSYAR') return 'PARSYAR';
+
+  if (clean.includes('INFORMATIKA') || clean === 'TI') return 'TI';
+  if (clean.includes('SISTEM INFORMASI') || clean === 'SI') return 'SI';
+  if (clean.includes('BIOTEKNOLOGI')) return 'BIOTEK';
+
+  return clean;
+}
+
+

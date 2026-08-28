@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { MahadStore } from '@/lib/store';
 import { Kamar, Gender, SKMahasantri, JenisPendaftaran } from '@/lib/types';
-import { FAKULTAS_LIST, SK_INFO } from '@/lib/constants';
+import { FAKULTAS_LIST, SK_INFO, getShortJurusan } from '@/lib/constants';
 import FloorPlanVisualizer from '@/components/room/FloorPlanVisualizer';
 import RoleGuard from '@/components/auth/RoleGuard';
 import { MahadAuth } from '@/lib/store';
@@ -480,7 +480,7 @@ function DaftarPageContent() {
                   <input
                     type="text"
                     disabled
-                    value={`${jurusan} - ${fakultas}`}
+                    value={`${getShortJurusan(jurusan, fakultas)} - ${fakultas}`}
                     className="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 cursor-not-allowed"
                   />
                 </div>

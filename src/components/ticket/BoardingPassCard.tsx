@@ -3,7 +3,7 @@
 import React, { useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Mahasantri } from '@/lib/types';
-import { SK_INFO } from '@/lib/constants';
+import { SK_INFO, getShortJurusan } from '@/lib/constants';
 import {
   Building2,
   Printer,
@@ -112,7 +112,7 @@ export default function BoardingPassCard({ mahasantri }: BoardingPassCardProps) 
                 NIM / NISN: <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-900">{mahasantri.nimNisn}</span>
               </div>
               <p className="text-xs text-slate-600 font-medium">
-                {mahasantri.jurusan} &bull; {mahasantri.fakultas}
+                {getShortJurusan(mahasantri.jurusan, mahasantri.fakultas)} &bull; {mahasantri.fakultas}
               </p>
               <div className="text-xs text-slate-500 flex items-center justify-center sm:justify-start gap-1.5 pt-1">
                 <span>WhatsApp: {mahasantri.noWa}</span>

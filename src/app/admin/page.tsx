@@ -12,7 +12,7 @@ import {
   JenisPendaftaran,
   GedungType,
 } from '@/lib/types';
-import { FAKULTAS_LIST, SK_INFO } from '@/lib/constants';
+import { FAKULTAS_LIST, SK_INFO, getShortJurusan } from '@/lib/constants';
 import SKUploadModal from '@/components/admin/SKUploadModal';
 import RoleGuard from '@/components/auth/RoleGuard';
 import {
@@ -546,7 +546,7 @@ function AdminDashboardContent() {
                         <td className="py-3.5 px-4">
                           <div className="font-bold text-slate-900 text-sm">{mhs.nama}</div>
                           <div className="font-mono text-emerald-800 text-[11px]">{mhs.nimNisn}</div>
-                          <div className="text-slate-500 text-[10px]">{mhs.jurusan} &bull; {mhs.fakultas}</div>
+                          <div className="text-slate-500 text-[10px] font-medium">{getShortJurusan(mhs.jurusan, mhs.fakultas)} &bull; {mhs.fakultas}</div>
                         </td>
 
                         <td className="py-3.5 px-4">
@@ -948,7 +948,9 @@ function AdminDashboardContent() {
                                 <div className="text-[10px] text-slate-500 mt-0.5">{item.jenisPendaftaran}</div>
                               </td>
                               <td className="py-3.5 px-4">
-                                <div className="font-semibold text-slate-700">{item.jurusan}</div>
+                                <div className="font-semibold text-slate-800" title={item.jurusan}>
+                                  {getShortJurusan(item.jurusan, item.fakultas)}
+                                </div>
                                 <div className="text-[10px] text-slate-400">{item.fakultas}</div>
                               </td>
                               <td className="py-3.5 px-4">
