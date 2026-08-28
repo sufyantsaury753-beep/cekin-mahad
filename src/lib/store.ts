@@ -938,6 +938,116 @@ export const MahadStore = {
     return { success: true, count };
   },
 
+  // Evict Mahasantri from Room (Release bed so student can select a new room)
+  evictMahasantriRoom(nimNisn: string): { success: boolean; error?: string; evicted?: Mahasantri } {
+    const clean = nimNisn.trim().toLowerCase();
+    const mhsList = this.getMahasantriList();
+    const mhsIndex = mhsList.findIndex((m) => m.nimNisn.trim().toLowerCase() === clean);
+
+    if (mhsIndex === -1) {
+      return { success: false, error: 'Mahasantri tidak ditemukan dalam daftar kamar.' };
+    }
+
+    const evictedMhs = mhsList[mhsIndex];
+
+    // 1. Free the bed in rooms
+    const rooms = this.getRooms();
+    const room = rooms.find((r) => r.id === evictedMhs.kamarId || r.nomor === evictedMhs.nomorKamar);
+    if (room) {
+      const bed = room.beds.find((b) => b.bedNumber === evictedMhs.bedNumber);
+      if (bed) {
+        bed.isOccupied = false;
+        bed.mahasantriId = undefined;
+        bed.mahasantriNimNisn = undefined;
+        bed.mahasantriNama = undefined;
+      }
+      this.saveRooms(rooms);
+    }
+
+    // 2. Remove student from mahasantri list
+    mhsList.splice(mhsIndex, 1);
+    this.saveMahasantriList(mhsList);
+
+    // 3. Remove check-in logs
+    const logs = this.getLogs().filter((l) => l.mahasantriNimNisn?.toLowerCase() !== clean);
+    this.saveLogs(logs);
+
+    // 4. Delete from Supabase
+    if (isSupabaseConfigured()) {
+      supabase.from('mahasantri').delete().eq('nim_nisn', evictedMhs.nimNisn).then(() => {});
+      supabase.from('checkin_logs').delete().eq('mahasantri_nim_nisn', evictedMhs.nimNisn).then(() => {});
+    }
+
+    return { success: true, evicted: evictedMhs };
+  },
+
+  // Move Mahasantri to New Room & Bed directly by Admin
+  moveMahasantriRoom(
+    nimNisn: string,
+    newKamarId: string,
+    newBedNumber: number
+  ): { success: boolean; error?: string; mahasantri?: Mahasantri } {
+    const clean = nimNisn.trim().toLowerCase();
+    const mhsList = this.getMahasantriList();
+    const mhs = mhsList.find((m) => m.nimNisn.trim().toLowerCase() === clean);
+
+    if (!mhs) {
+      return { success: false, error: 'Mahasantri tidak ditemukan.' };
+    }
+
+    const rooms = this.getRooms();
+
+    // Check target room and bed
+    const targetRoom = rooms.find((r) => r.id === newKamarId);
+    if (!targetRoom) {
+      return { success: false, error: 'Kamar tujuan tidak ditemukan.' };
+    }
+
+    const targetBed = targetRoom.beds.find((b) => b.bedNumber === newBedNumber);
+    if (!targetBed) {
+      return { success: false, error: 'Nomor ranjang tujuan tidak valid.' };
+    }
+
+    if (targetBed.isOccupied && targetBed.mahasantriNimNisn?.toLowerCase() !== clean) {
+      return { success: false, error: `Ranjang ${newBedNumber} di Kamar ${targetRoom.nomor} sudah ditempati santri lain.` };
+    }
+
+    // Free old bed
+    const oldRoom = rooms.find((r) => r.id === mhs.kamarId || r.nomor === mhs.nomorKamar);
+    if (oldRoom) {
+      const oldBed = oldRoom.beds.find((b) => b.bedNumber === mhs.bedNumber);
+      if (oldBed) {
+        oldBed.isOccupied = false;
+        oldBed.mahasantriId = undefined;
+        oldBed.mahasantriNimNisn = undefined;
+        oldBed.mahasantriNama = undefined;
+      }
+    }
+
+    // Occupy new bed
+    targetBed.isOccupied = true;
+    targetBed.mahasantriId = mhs.id;
+    targetBed.mahasantriNimNisn = mhs.nimNisn;
+    targetBed.mahasantriNama = mhs.nama;
+
+    // Update student details
+    const newQrToken = `QR-MAHAD-${mhs.nimNisn}-${targetRoom.nomor}-${newBedNumber}`;
+    mhs.gedung = targetRoom.gedung;
+    mhs.kamarId = targetRoom.id;
+    mhs.nomorKamar = targetRoom.nomor;
+    mhs.lantai = targetRoom.lantai;
+    mhs.jajaran = targetRoom.jajaran;
+    mhs.bedNumber = newBedNumber;
+    mhs.qrCodeToken = newQrToken;
+    mhs.qrToken = newQrToken;
+
+    // Save
+    this.saveRooms(rooms);
+    this.saveMahasantriList(mhsList);
+
+    return { success: true, mahasantri: mhs };
+  },
+
   // --- Reset All Data ---
   resetAllData() {
     if (typeof window === 'undefined') return;
