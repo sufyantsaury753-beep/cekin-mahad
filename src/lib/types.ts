@@ -4,7 +4,9 @@ export type CheckInStatus = 'REGISTERED' | 'CHECKED_IN';
 
 export type RoomCategory = 'UMUM' | 'INTERNASIONAL' | 'KHUSUS';
 
-export type JajaranPosition = 'DEPAN' | 'BELAKANG';
+export type JajaranPosition = 'DEPAN' | 'BELAKANG' | 'PUTRA' | 'PUTRI_BARAT' | 'PUTRI_TIMUR';
+
+export type GedungType = "Ma'had Jadid" | "Ma'had Qodim";
 
 export type JenisPendaftaran = 'Calon Mahasantri Baru' | 'Perpanjangan' | 'Mahasantri Internasional';
 
@@ -14,9 +16,11 @@ export interface UserSession {
   role: UserRole;
   name: string;
   identifier: string; // Email, Username, or NIM/NISN
-  floorAssigned?: number; // Khusus Pengurus (1 - 5)
+  floorAssigned?: number; // Khusus Pengurus (2 - 5)
+  gedungAssigned?: GedungType;
   mahasantriData?: Mahasantri;
   skData?: SKMahasantri;
+  pengurusData?: SKPengurus;
   token: string;
 }
 
@@ -24,10 +28,27 @@ export interface PengurusAccount {
   id: string;
   username: string;
   nama: string;
+  jenisKelamin: Gender;
+  jabatan: string;
   lantai: number;
-  gedung: string;
+  gedung: GedungType;
   password: string;
   noWa: string;
+}
+
+export interface SKPengurus {
+  id: string;
+  nama: string;
+  nim?: string;
+  jenisKelamin: Gender;
+  jabatan: 'Mudabbir' | 'Mudabbirah' | 'Ketua Pengurus' | 'Divisi Keamanan' | 'Divisi Kebersihan' | string;
+  gedung: GedungType;
+  lantai: number; // 2 - 5
+  kamarKhusus?: string; // misal "209"
+  noWa: string;
+  password: string;
+  isAktif: boolean;
+  skNomor?: string;
 }
 
 export interface SKMahasantri {
@@ -48,7 +69,7 @@ export interface SKMahasantri {
 }
 
 export interface Bed {
-  bedNumber: number; // 1, 2, 3, 4
+  bedNumber: number; // 1, 2, 3, 4, 5, 6...
   isOccupied: boolean;
   mahasantriId?: string;
   mahasantriNimNisn?: string;
@@ -56,56 +77,66 @@ export interface Bed {
 }
 
 export interface Kamar {
-  id: string; // e.g. "K-513"
-  nomor: string; // "513"
-  lantai: number; // 1 - 5
+  id: string; // e.g. "JADID-209", "QODIM-201"
+  nomor: string; // "209", "201"
+  lantai: number; // 2 - 5
   jajaran: JajaranPosition;
-  gedung: string; // "Ma'had Qodim" (Putra) / "Ma'had Jadid" (Putri)
-  gender: Gender;
+  gedung: GedungType; // "Ma'had Jadid" (Putra 09-16, Putri 01-08 & 17-24) / "Ma'had Qodim" (Full Putri 01-24)
+  gender: Gender; // 'L' (Putra) / 'P' (Putri)
   kategori: RoomCategory;
   isLocked: boolean;
-  lockReason?: string;
-  kapasitas: number; // default 4
+  lockReason?: string; // e.g. "Kamar Mudabbir", "Kamar Tamu", "Perbaikan Fasilitas"
+  kapasitas: number; // default 4 (bisa diubah admin jadi 2, 6, 8 dsb)
   beds: Bed[];
 }
 
 export interface Mahasantri {
   id: string;
-  nimNisn: string; // NIM atau NISN
   nama: string;
+  nimNisn: string;
   jenisKelamin: Gender;
   jenisPendaftaran: JenisPendaftaran;
   fakultas: string;
   jurusan: string;
   asalNegara?: string;
+  isInternasional: boolean;
   noWa: string;
   namaWali: string;
   noWaWali: string;
-  isInternasional: boolean;
-  pasFotoUrl: string;
-  buktiBerkasUrl?: string;
+  pasFotoUrl?: string;
+  // Alokasi Kamar
+  gedung: GedungType;
+  lantai: number;
   kamarId: string;
   nomorKamar: string;
-  lantai: number;
   jajaran: JajaranPosition;
   bedNumber: number;
+  // Status Check-In
   statusCheckIn: CheckInStatus;
   checkInTimestamp?: string;
+  petugasCheckIn?: string;
   checkedInBy?: string;
+  catatanBarangCheckIn?: string;
   catatanBarang?: string;
-  qrToken: string;
-  registeredAt: string;
-  pin?: string;
+  // Security
+  qrCodeToken: string;
+  qrToken?: string;
+  skNomor: string;
+  createdAt: string;
+  registeredAt?: string;
 }
 
 export interface CheckInLog {
   id: string;
-  nimNisn: string;
+  mahasantriId: string;
+  mahasantriNimNisn: string;
+  nimNisn?: string;
   nama: string;
+  gedung: GedungType;
   nomorKamar: string;
-  bedNumber: number;
   lantai: number;
+  bedNumber: number;
   timestamp: string;
   petugas: string;
-  catatanBarang?: string;
+  catatanBarang: string;
 }

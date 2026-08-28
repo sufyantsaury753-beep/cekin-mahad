@@ -1,24 +1,36 @@
-import { Kamar, Mahasantri, CheckInLog, SKMahasantri, UserSession, UserRole } from './types';
+import {
+  Kamar,
+  Mahasantri,
+  CheckInLog,
+  SKMahasantri,
+  SKPengurus,
+  UserSession,
+  UserRole,
+  Gender,
+  JenisPendaftaran,
+} from './types';
 import {
   generateInitialRooms,
   INITIAL_MAHASANTRI,
   INITIAL_SK_LIST,
   DEFAULT_ADMIN,
   DEFAULT_PENGURUS_LIST,
+  DEFAULT_SK_PENGURUS_LIST,
 } from './constants';
 
-const ROOMS_KEY = 'mahad_rooms_v2';
-const MHS_KEY = 'mahad_mhs_v2';
-const LOGS_KEY = 'mahad_logs_v2';
-const SK_KEY = 'mahad_sk_v2';
-const SESSION_KEY = 'mahad_session_v2';
+const ROOMS_KEY = 'mahad_rooms_v3';
+const MHS_KEY = 'mahad_mhs_v3';
+const LOGS_KEY = 'mahad_logs_v3';
+const SK_KEY = 'mahad_sk_v3';
+const SK_PENGURUS_KEY = 'mahad_sk_pengurus_v3';
+const SESSION_KEY = 'mahad_session_v3';
 
 // Populate initial rooms with pre-existing mahasantri bookings
 function buildInitialRooms(): Kamar[] {
   const rooms = generateInitialRooms();
 
   INITIAL_MAHASANTRI.forEach((mhs) => {
-    const room = rooms.find((r) => r.id === mhs.kamarId);
+    const room = rooms.find((r) => r.nomor === mhs.nomorKamar && r.gedung === mhs.gedung);
     if (room) {
       const bed = room.beds.find((b) => b.bedNumber === mhs.bedNumber);
       if (bed) {
@@ -116,7 +128,7 @@ export const MahadStore = {
     if (!skData) {
       return {
         isAllowed: false,
-        error: `⛔ AKSES DITOLAK: NIM / NISN "${query.trim()}" tidak terdaftar dalam SK Pengumuman Mahad No. B-092/Un.30/P.IV/KP.07.06/06/2026. Hanya nama yang tercantum di SK yang berhak memilih kamar.`,
+        error: `⛔ AKSES DITOLAK: NIM / NISN "${query.trim()}" tidak terdaftar dalam SK Pengumuman Mahad. Hanya nama yang tercantum di SK yang berhak memilih kamar.`,
       };
     }
 
@@ -128,7 +140,7 @@ export const MahadStore = {
         isAllowed: true,
         data: skData,
         alreadyRegistered: existing,
-        error: `NIM/NISN ${query.trim()} (${existing.nama}) sudah terdaftar di Kamar ${existing.nomorKamar} (Bed ${existing.bedNumber}).`,
+        error: `NIM/NISN ${query.trim()} (${existing.nama}) sudah terdaftar di ${existing.gedung} Kamar ${existing.nomorKamar} (Bed ${existing.bedNumber}).`,
       };
     }
 
@@ -136,6 +148,60 @@ export const MahadStore = {
       isAllowed: true,
       data: skData,
     };
+  },
+
+  // --- SK Pengurus / Mudabbir & Mudabbirah ---
+  getSKPengurusList(): SKPengurus[] {
+    if (typeof window === 'undefined') return DEFAULT_SK_PENGURUS_LIST;
+    const stored = localStorage.getItem(SK_PENGURUS_KEY);
+    if (!stored) {
+      try {
+        localStorage.setItem(SK_PENGURUS_KEY, JSON.stringify(DEFAULT_SK_PENGURUS_LIST));
+      } catch (e) {}
+      return DEFAULT_SK_PENGURUS_LIST;
+    }
+    try {
+      return JSON.parse(stored);
+    } catch {
+      return DEFAULT_SK_PENGURUS_LIST;
+    }
+  },
+
+  saveSKPengurusList(list: SKPengurus[]) {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(SK_PENGURUS_KEY, JSON.stringify(list));
+    } catch (e) {
+      console.warn('saveSKPengurusList storage error:', e);
+    }
+    window.dispatchEvent(new CustomEvent('mahad_sk_pengurus_updated', { detail: list }));
+  },
+
+  addSKPengurus(pengurus: SKPengurus) {
+    const list = this.getSKPengurusList();
+    const idx = list.findIndex((p) => p.id === pengurus.id || p.nim === pengurus.nim);
+    if (idx >= 0) {
+      list[idx] = pengurus;
+    } else {
+      list.push(pengurus);
+    }
+    this.saveSKPengurusList(list);
+  },
+
+  deleteSKPengurus(id: string) {
+    const list = this.getSKPengurusList().filter((p) => p.id !== id);
+    this.saveSKPengurusList(list);
+  },
+
+  resetPengurusPassword(id: string, newPass: string) {
+    const list = this.getSKPengurusList();
+    const p = list.find((x) => x.id === id);
+    if (p) {
+      p.password = newPass;
+      this.saveSKPengurusList(list);
+      return true;
+    }
+    return false;
   },
 
   // --- Rooms Management ---
@@ -150,7 +216,18 @@ export const MahadStore = {
       return init;
     }
     try {
-      return JSON.parse(stored);
+      const parsed: Kamar[] = JSON.parse(stored);
+      // Validate that parsed rooms contain both Jadid and Qodim
+      const hasJadid = parsed.some((r) => r.gedung === "Ma'had Jadid");
+      const hasQodim = parsed.some((r) => r.gedung === "Ma'had Qodim");
+      if (!hasJadid || !hasQodim || parsed.length < 100) {
+        const init = buildInitialRooms();
+        try {
+          localStorage.setItem(ROOMS_KEY, JSON.stringify(init));
+        } catch (e) {}
+        return init;
+      }
+      return parsed;
     } catch {
       return buildInitialRooms();
     }
@@ -164,6 +241,61 @@ export const MahadStore = {
       console.warn('localStorage saveRooms error:', e);
     }
     window.dispatchEvent(new CustomEvent('mahad_rooms_updated', { detail: rooms }));
+  },
+
+  // Admin Feature: Toggle Lock Room (e.g. Kamar Mudabbir, Kamar Tamu, Perbaikan)
+  toggleRoomLock(roomId: string, isLocked: boolean, reason?: string): { success: boolean; error?: string } {
+    const rooms = this.getRooms();
+    const room = rooms.find((r) => r.id === roomId);
+    if (!room) return { success: false, error: 'Kamar tidak ditemukan.' };
+
+    room.isLocked = isLocked;
+    room.lockReason = isLocked ? (reason || 'Kamar Dikunci Admin (Kamar Mudabbir/Khusus)') : undefined;
+    this.saveRooms(rooms);
+    return { success: true };
+  },
+
+  // Admin Feature: Update Bed Capacity (+ / - Beds per Room)
+  updateRoomCapacity(roomId: string, newCapacity: number): { success: boolean; error?: string } {
+    const rooms = this.getRooms();
+    const room = rooms.find((r) => r.id === roomId);
+    if (!room) return { success: false, error: 'Kamar tidak ditemukan.' };
+
+    if (newCapacity < 1 || newCapacity > 12) {
+      return { success: false, error: 'Kapasitas kasur harus antara 1 sampai 12.' };
+    }
+
+    const currentOccupiedBeds = room.beds.filter((b) => b.isOccupied);
+    if (newCapacity < currentOccupiedBeds.length) {
+      return {
+        success: false,
+        error: `Tidak dapat mengurangi kapasitas menjadi ${newCapacity} kasur karena sudah ada ${currentOccupiedBeds.length} mahasantri yang menempati ranjang di kamar ini.`,
+      };
+    }
+
+    // If increasing capacity
+    if (newCapacity > room.beds.length) {
+      for (let i = room.beds.length + 1; i <= newCapacity; i++) {
+        room.beds.push({ bedNumber: i, isOccupied: false });
+      }
+    } else if (newCapacity < room.beds.length) {
+      // If decreasing, remove unoccupied beds from the end
+      let bedsToRemove = room.beds.length - newCapacity;
+      for (let i = room.beds.length - 1; i >= 0 && bedsToRemove > 0; i--) {
+        if (!room.beds[i].isOccupied) {
+          room.beds.splice(i, 1);
+          bedsToRemove--;
+        }
+      }
+      // Re-index bed numbers
+      room.beds.forEach((b, idx) => {
+        b.bedNumber = idx + 1;
+      });
+    }
+
+    room.kapasitas = newCapacity;
+    this.saveRooms(rooms);
+    return { success: true };
   },
 
   // --- Mahasantri Booking ---
@@ -200,14 +332,28 @@ export const MahadStore = {
 
   getMahasantriByQr(qrToken: string): Mahasantri | undefined {
     const list = this.getMahasantriList();
-    return list.find((m) => m.qrToken.trim() === qrToken.trim());
+    return list.find(
+      (m) =>
+        (m.qrCodeToken && m.qrCodeToken.trim() === qrToken.trim()) ||
+        (m.qrToken && m.qrToken.trim() === qrToken.trim())
+    );
   },
 
   bookRoom(
-    mhsData: Omit<
-      Mahasantri,
-      'id' | 'kamarId' | 'nomorKamar' | 'lantai' | 'jajaran' | 'bedNumber' | 'statusCheckIn' | 'qrToken' | 'registeredAt'
-    >,
+    mhsData: {
+      nama: string;
+      nimNisn: string;
+      jenisKelamin: Gender;
+      jenisPendaftaran: JenisPendaftaran;
+      fakultas: string;
+      jurusan: string;
+      asalNegara?: string;
+      isInternasional: boolean;
+      noWa: string;
+      namaWali: string;
+      noWaWali: string;
+      pasFotoUrl?: string;
+    },
     kamarId: string,
     bedNumber: number
   ): { success: boolean; error?: string; mahasantri?: Mahasantri } {
@@ -219,7 +365,7 @@ export const MahadStore = {
     if (skCheck.alreadyRegistered) {
       return {
         success: false,
-        error: `NIM/NISN ${mhsData.nimNisn} sudah memilih Kamar ${skCheck.alreadyRegistered.nomorKamar} (Bed ${skCheck.alreadyRegistered.bedNumber}).`,
+        error: `NIM/NISN ${mhsData.nimNisn} sudah memilih ${skCheck.alreadyRegistered.gedung} Kamar ${skCheck.alreadyRegistered.nomorKamar} (Bed ${skCheck.alreadyRegistered.bedNumber}).`,
         mahasantri: skCheck.alreadyRegistered,
       };
     }
@@ -232,8 +378,18 @@ export const MahadStore = {
       return { success: false, error: 'Kamar tidak ditemukan.' };
     }
 
+    // Gender Constraint Check
+    if (mhsData.jenisKelamin && room.gender && mhsData.jenisKelamin !== room.gender) {
+      return {
+        success: false,
+        error: `⛔ AKSES DITOLAK: Mahasantri ${
+          mhsData.jenisKelamin === 'L' ? 'Putra (L)' : 'Putri (P)'
+        } tidak dapat memilih kamar khusus ${room.gender === 'L' ? 'Putra' : 'Putri'} (${room.gedung} Kamar ${room.nomor}).`,
+      };
+    }
+
     if (room.isLocked && !mhsData.isInternasional) {
-      return { success: false, error: `Kamar ${room.nomor} dikunci oleh admin: ${room.lockReason || 'Khusus'}` };
+      return { success: false, error: `Kamar ${room.nomor} dikunci oleh admin: ${room.lockReason || 'Kamar Mudabbir / Khusus'}` };
     }
 
     const bed = room.beds.find((b) => b.bedNumber === bedNumber);
@@ -254,21 +410,27 @@ export const MahadStore = {
     const newMahasantri: Mahasantri = {
       ...mhsData,
       id: newMhsId,
+      gedung: room.gedung,
       kamarId: room.id,
       nomorKamar: room.nomor,
       lantai: room.lantai,
       jajaran: room.jajaran,
       bedNumber,
       statusCheckIn: 'REGISTERED',
+      qrCodeToken: qrToken,
       qrToken,
+      skNomor: skCheck.data?.skNomor || 'SK-MAHAD-2026',
+      createdAt: new Date().toISOString(),
       registeredAt: new Date().toISOString(),
     };
 
+    // Update bed in room
     bed.isOccupied = true;
     bed.mahasantriId = newMhsId;
-    bed.mahasantriNimNisn = mhsData.nimNisn;
-    bed.mahasantriNama = mhsData.nama;
+    bed.mahasantriNimNisn = newMahasantri.nimNisn;
+    bed.mahasantriNama = newMahasantri.nama;
 
+    // Save changes
     this.saveRooms(rooms);
     mhsList.push(newMahasantri);
     this.saveMahasantriList(mhsList);
@@ -276,13 +438,14 @@ export const MahadStore = {
     return { success: true, mahasantri: newMahasantri };
   },
 
+  // --- Check-in Verification (Pengurus / Mudabbir) ---
   confirmCheckIn(
     nimNisn: string,
     petugas: string,
-    catatanBarang?: string
+    catatanBarang: string
   ): { success: boolean; error?: string; mahasantri?: Mahasantri } {
     const mhsList = this.getMahasantriList();
-    const mhs = mhsList.find((m) => m.nimNisn.toLowerCase() === nimNisn.toLowerCase());
+    const mhs = mhsList.find((m) => m.nimNisn.trim().toLowerCase() === nimNisn.trim().toLowerCase());
 
     if (!mhs) {
       return { success: false, error: `Mahasantri dengan NIM/NISN ${nimNisn} tidak ditemukan.` };
@@ -290,55 +453,41 @@ export const MahadStore = {
 
     if (mhs.statusCheckIn === 'CHECKED_IN') {
       return {
-        success: false,
-        error: `Mahasantri ${mhs.nama} sudah check-in pada ${new Date(mhs.checkInTimestamp || '').toLocaleTimeString('id-ID')}.`,
+        success: true,
         mahasantri: mhs,
+        error: `Mahasantri ${mhs.nama} sudah melakukan check-in sebelumnya pada ${new Date(
+          mhs.checkInTimestamp || ''
+        ).toLocaleString('id-ID')}.`,
       };
     }
 
-    const now = new Date().toISOString();
+    const timestamp = new Date().toISOString();
     mhs.statusCheckIn = 'CHECKED_IN';
-    mhs.checkInTimestamp = now;
-    mhs.checkedInBy = petugas;
-    mhs.catatanBarang = catatanBarang || 'Sesuai SOP Barang';
+    mhs.checkInTimestamp = timestamp;
+    mhs.petugasCheckIn = petugas;
+    mhs.catatanBarangCheckIn = catatanBarang;
 
     this.saveMahasantriList(mhsList);
 
-    const log: CheckInLog = {
-      id: `LOG-${Date.now()}`,
-      nimNisn: mhs.nimNisn,
+    // Record check-in log
+    const logs = this.getLogs();
+    const newLog: CheckInLog = {
+      id: `LOG-${Date.now().toString().slice(-6)}`,
+      mahasantriId: mhs.id,
+      mahasantriNimNisn: mhs.nimNisn,
       nama: mhs.nama,
+      gedung: mhs.gedung,
       nomorKamar: mhs.nomorKamar,
-      bedNumber: mhs.bedNumber,
       lantai: mhs.lantai,
-      timestamp: now,
+      bedNumber: mhs.bedNumber,
+      timestamp,
       petugas,
-      catatanBarang: mhs.catatanBarang,
+      catatanBarang,
     };
-    this.addLog(log);
+    logs.unshift(newLog);
+    this.saveLogs(logs);
 
     return { success: true, mahasantri: mhs };
-  },
-
-  toggleRoomLock(kamarId: string, isLocked: boolean, reason?: string) {
-    const rooms = this.getRooms();
-    const room = rooms.find((r) => r.id === kamarId);
-    if (room) {
-      room.isLocked = isLocked;
-      room.lockReason = isLocked ? (reason || 'Dikunci oleh Admin') : undefined;
-      this.saveRooms(rooms);
-    }
-  },
-
-  toggleFloorLock(lantai: number, isLocked: boolean, reason?: string) {
-    const rooms = this.getRooms();
-    rooms.forEach((r) => {
-      if (r.lantai === lantai) {
-        r.isLocked = isLocked;
-        r.lockReason = isLocked ? (reason || `Lantai ${lantai} dikunci oleh Admin`) : undefined;
-      }
-    });
-    this.saveRooms(rooms);
   },
 
   getLogs(): CheckInLog[] {
@@ -352,27 +501,30 @@ export const MahadStore = {
     }
   },
 
-  addLog(log: CheckInLog) {
+  saveLogs(logs: CheckInLog[]) {
     if (typeof window === 'undefined') return;
-    const logs = this.getLogs();
-    logs.unshift(log);
     try {
       localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
-    } catch (e) {}
+    } catch (e) {
+      console.warn('localStorage saveLogs error:', e);
+    }
+    window.dispatchEvent(new CustomEvent('mahad_logs_updated', { detail: logs }));
   },
 
-  resetToDefault() {
+  // --- Reset All Data ---
+  resetAllData() {
     if (typeof window === 'undefined') return;
     localStorage.removeItem(ROOMS_KEY);
     localStorage.removeItem(MHS_KEY);
     localStorage.removeItem(LOGS_KEY);
     localStorage.removeItem(SK_KEY);
+    localStorage.removeItem(SK_PENGURUS_KEY);
     localStorage.removeItem(SESSION_KEY);
     window.location.reload();
   },
 };
 
-// --- AUTHENTICATION & MULTI-ROLE ACCESS MANAGER ---
+// --- AUTHENTICATION & MULTI-ROLE SESSION STORE ---
 export const MahadAuth = {
   getSession(): UserSession | null {
     if (typeof window === 'undefined') return null;
@@ -385,73 +537,106 @@ export const MahadAuth = {
     }
   },
 
-  setSession(session: UserSession | null) {
+  setSession(session: UserSession) {
     if (typeof window === 'undefined') return;
-    if (!session) {
-      localStorage.removeItem(SESSION_KEY);
-    } else {
-      try {
-        localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-      } catch (e) {}
+    try {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    } catch (e) {
+      console.warn('setSession storage error:', e);
     }
     window.dispatchEvent(new CustomEvent('mahad_auth_changed', { detail: session }));
   },
 
-  logout() {
-    this.setSession(null);
+  clearSession() {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(SESSION_KEY);
+    window.dispatchEvent(new CustomEvent('mahad_auth_changed', { detail: null }));
   },
 
   // Login Superadmin
-  loginAdmin(email: string, pass: string): { success: boolean; session?: UserSession; error?: string } {
-    if (email.trim().toLowerCase() === DEFAULT_ADMIN.email.toLowerCase() && pass === DEFAULT_ADMIN.password) {
+  loginAdmin(password: string): { success: boolean; session?: UserSession; error?: string } {
+    if (password.trim() === DEFAULT_ADMIN.password) {
       const session: UserSession = {
         role: 'ADMIN',
         name: DEFAULT_ADMIN.nama,
         identifier: DEFAULT_ADMIN.email,
-        token: `AUTH-ADM-${Date.now()}`,
+        token: `AUTH-ADMIN-${Date.now()}`,
       };
       this.setSession(session);
       return { success: true, session };
     }
-    return { success: false, error: 'Email atau password Admin tidak valid.' };
+    return { success: false, error: 'Password Superadmin salah! Silakan coba lagi.' };
   },
 
-  // Login Pengurus / Mudabbir Lantai
-  loginPengurus(username: string, pass: string): { success: boolean; session?: UserSession; error?: string } {
-    const pengurus = DEFAULT_PENGURUS_LIST.find(
-      (p) => p.username.toLowerCase() === username.trim().toLowerCase()
+  // Login Pengurus / Mudabbir & Mudabbirah
+  loginPengurus(
+    usernameOrId: string,
+    password: string
+  ): { success: boolean; session?: UserSession; error?: string } {
+    const cleanUser = usernameOrId.trim().toLowerCase();
+    const cleanPass = password.trim();
+
+    // Check dynamic SK Pengurus list first
+    const skPengurusList = MahadStore.getSKPengurusList();
+    const skPengurus = skPengurusList.find(
+      (p) =>
+        p.id.toLowerCase() === cleanUser ||
+        (p.nim && p.nim.toLowerCase() === cleanUser) ||
+        p.nama.toLowerCase().includes(cleanUser)
     );
 
-    if (!pengurus) {
-      return { success: false, error: `Username pengurus "${username}" tidak ditemukan.` };
+    if (skPengurus && skPengurus.password === cleanPass) {
+      const session: UserSession = {
+        role: 'PENGURUS',
+        name: skPengurus.nama,
+        identifier: skPengurus.id,
+        floorAssigned: skPengurus.lantai,
+        gedungAssigned: skPengurus.gedung,
+        pengurusData: skPengurus,
+        token: `AUTH-PGR-${skPengurus.id}-${Date.now()}`,
+      };
+      this.setSession(session);
+      return { success: true, session };
     }
 
-    if (pengurus.password !== pass.trim()) {
-      return { success: false, error: 'Password pengurus tidak sesuai.' };
+    // Fallback: check DEFAULT_PENGURUS_LIST
+    const defaultAcc = DEFAULT_PENGURUS_LIST.find(
+      (p) =>
+        p.username.toLowerCase() === cleanUser ||
+        p.id.toLowerCase() === cleanUser ||
+        p.nama.toLowerCase().includes(cleanUser)
+    );
+
+    if (defaultAcc && defaultAcc.password === cleanPass) {
+      const session: UserSession = {
+        role: 'PENGURUS',
+        name: defaultAcc.nama,
+        identifier: defaultAcc.username,
+        floorAssigned: defaultAcc.lantai,
+        gedungAssigned: defaultAcc.gedung,
+        token: `AUTH-PGR-${defaultAcc.id}-${Date.now()}`,
+      };
+      this.setSession(session);
+      return { success: true, session };
     }
 
-    const session: UserSession = {
-      role: 'PENGURUS',
-      name: pengurus.nama,
-      identifier: pengurus.username,
-      floorAssigned: pengurus.lantai,
-      token: `AUTH-PGR-${pengurus.id}-${Date.now()}`,
-    };
-    this.setSession(session);
-    return { success: true, session };
+    return { success: false, error: 'Username atau Password Pengurus / Mudabbir salah!' };
   },
 
-  // Step 1 Mahasantri Login Check: Check if PIN exists or requires activation
-  checkMahasantriLogin(nimNisn: string): {
+  // Check if Mahasantri PIN is created
+  checkMahasantriLogin(nimNisn: string) {
+    return this.checkMahasantriAccount(nimNisn);
+  },
+
+  checkMahasantriAccount(nimNisn: string): {
     found: boolean;
     isPinSet: boolean;
     skData?: SKMahasantri;
     mhsData?: Mahasantri;
     error?: string;
   } {
-    const clean = nimNisn.trim().toLowerCase();
     const skList = MahadStore.getSKList();
-    const skData = skList.find((x) => x.nimNisn.toLowerCase() === clean);
+    const skData = skList.find((x) => x.nimNisn.toLowerCase() === nimNisn.trim().toLowerCase());
 
     if (!skData) {
       return {
@@ -550,5 +735,9 @@ export const MahadAuth = {
     this.setSession(session);
 
     return { success: true, session };
+  },
+
+  logout() {
+    this.clearSession();
   },
 };

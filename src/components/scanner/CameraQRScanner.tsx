@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Html5Qrcode } from 'html5-qrcode';
+import jsQR from 'jsqr';
 import { MahadStore } from '@/lib/store';
 import { Mahasantri } from '@/lib/types';
 import { ATURAN_BARANG, SK_INFO } from '@/lib/constants';
@@ -19,17 +19,19 @@ import {
   Sparkles,
   RefreshCw,
   Video,
-  ScanLine,
+  SwitchCamera,
+  Upload,
 } from 'lucide-react';
 
 export default function CameraQRScanner() {
   const [scannerActive, setScannerActive] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [manualInput, setManualInput] = useState('');
   const [scannedMahasantri, setScannedMahasantri] = useState<Mahasantri | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [petugasNama, setPetugasNama] = useState('Ustadz Pengurus Lantai');
+  const [petugasNama, setPetugasNama] = useState('Ustadz Pengurus Lantai / Mudabbir');
   const [catatanBarang, setCatatanBarang] = useState('Pemeriksaan barang sesuai SOP Ma\'had.');
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -38,7 +40,6 @@ export default function CameraQRScanner() {
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const animFrameIdRef = useRef<number | null>(null);
   const fileCameraInputRef = useRef<HTMLInputElement>(null);
-  const html5QrCodeOffscreenRef = useRef<Html5Qrcode | null>(null);
 
   // Process Scanned Data (Token, NIM, or NISN)
   const handleScannedData = (text: string) => {
@@ -64,7 +65,7 @@ export default function CameraQRScanner() {
 
     if (mhs) {
       setScannedMahasantri(mhs);
-      stopScanner(); // Pause scanner when code is found
+      stopScanner(); // Pause scanner when ticket is found
       if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
         window.navigator.vibrate(100);
       }
@@ -73,15 +74,20 @@ export default function CameraQRScanner() {
     }
   };
 
-  // Start Native HTML5 Video Stream (Never black screen!)
-  const startScanner = async () => {
+  // Start Camera with jsQR continuous frame scanning
+  const startScanner = async (preferredMode: 'environment' | 'user' = facingMode) => {
     try {
       setErrorMessage(null);
       setIsStarting(true);
 
+      // Stop any existing stream
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+
       const constraints: MediaStreamConstraints = {
         video: {
-          facingMode: { ideal: 'environment' },
+          facingMode: { ideal: preferredMode },
           width: { ideal: 1280 },
           height: { ideal: 720 },
         },
@@ -94,15 +100,14 @@ export default function CameraQRScanner() {
       setScannerActive(true);
       setIsStarting(false);
 
-      // Wait a tick for video element to mount
+      // Connect stream to video element
       setTimeout(() => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.setAttribute('playsinline', 'true');
-          videoRef.current.play().catch((e) => console.warn('Play error:', e));
-
-          // Start scanning loop
-          startFrameScanner();
+          videoRef.current.play().then(() => {
+            startJsQRScanningLoop();
+          }).catch((e) => console.warn('Video play error:', e));
         }
       }, 100);
     } catch (err: any) {
@@ -110,57 +115,56 @@ export default function CameraQRScanner() {
       setIsStarting(false);
       setScannerActive(false);
       setErrorMessage(
-        'Tidak dapat menyalakan kamera live. Pastikan izin kamera telah diberikan di browser atau gunakan tombol "Jepret Foto QR (HP)".'
+        'Tidak dapat menyalakan kamera. Pastikan izin kamera telah diberikan di browser atau gunakan tombol "Jepret Foto QR (HP)".'
       );
     }
   };
 
-  // Continuous frame scanner using native BarcodeDetector or Canvas fallback
-  const startFrameScanner = () => {
-    const hasBarcodeDetector = typeof window !== 'undefined' && 'BarcodeDetector' in window;
-    let detector: any = null;
+  // Continuous jsQR scanning loop using canvas
+  const startJsQRScanningLoop = () => {
+    const scan = () => {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
 
-    if (hasBarcodeDetector) {
-      try {
-        detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
-      } catch (e) {
-        detector = null;
-      }
-    }
-
-    const scanLoop = async () => {
-      if (!videoRef.current || videoRef.current.readyState < 2) {
-        animFrameIdRef.current = requestAnimationFrame(scanLoop);
+      if (!video || !canvas || video.readyState < 2) {
+        animFrameIdRef.current = requestAnimationFrame(scan);
         return;
       }
 
-      if (detector) {
-        try {
-          const barcodes = await detector.detect(videoRef.current);
-          if (barcodes && barcodes.length > 0) {
-            const rawValue = barcodes[0].rawValue;
-            if (rawValue) {
-              handleScannedData(rawValue);
-              return; // Stop loop on success
-            }
+      const width = video.videoWidth;
+      const height = video.videoHeight;
+
+      if (width > 0 && height > 0) {
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (ctx) {
+          ctx.drawImage(video, 0, 0, width, height);
+          const imageData = ctx.getImageData(0, 0, width, height);
+
+          // Decode QR using jsQR
+          const code = jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: 'dontInvert',
+          });
+
+          if (code && code.data && code.data.trim()) {
+            handleScannedData(code.data);
+            return; // Exit loop on successful detection
           }
-        } catch (e) {}
+        }
       }
 
-      // Continue loop if not stopped
-      animFrameIdRef.current = setTimeout(() => {
-        requestAnimationFrame(scanLoop);
-      }, 150) as unknown as number;
+      animFrameIdRef.current = requestAnimationFrame(scan);
     };
 
-    requestAnimationFrame(scanLoop);
+    animFrameIdRef.current = requestAnimationFrame(scan);
   };
 
   // Stop Camera Stream
   const stopScanner = () => {
     if (animFrameIdRef.current) {
       cancelAnimationFrame(animFrameIdRef.current);
-      clearTimeout(animFrameIdRef.current);
       animFrameIdRef.current = null;
     }
 
@@ -177,21 +181,44 @@ export default function CameraQRScanner() {
     setIsStarting(false);
   };
 
+  // Switch between back and front cameras
+  const switchCamera = () => {
+    const nextMode = facingMode === 'environment' ? 'user' : 'environment';
+    setFacingMode(nextMode);
+    if (scannerActive) {
+      stopScanner();
+      startScanner(nextMode);
+    }
+  };
+
   // Scan from Photo File / Direct Camera Snap
-  const handleScanFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleScanFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    try {
-      setErrorMessage(null);
-      if (!html5QrCodeOffscreenRef.current) {
-        html5QrCodeOffscreenRef.current = new Html5Qrcode('offscreen-qr-reader');
-      }
-      const decoded = await html5QrCodeOffscreenRef.current.scanFile(file, true);
-      handleScannedData(decoded);
-    } catch (err) {
-      setErrorMessage('Barcode tidak terdeteksi pada foto. Pastikan posisi QR Code tegak, terang, dan tidak buram.');
-    }
+    setErrorMessage(null);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          const imageData = ctx.getImageData(0, 0, img.width, img.height);
+          const code = jsQR(imageData.data, imageData.width, imageData.height);
+          if (code && code.data) {
+            handleScannedData(code.data);
+          } else {
+            setErrorMessage('Barcode tidak terdeteksi pada foto. Pastikan posisi QR Code tegak, terang, dan tidak buram.');
+          }
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
   };
 
   useEffect(() => {
@@ -222,7 +249,9 @@ export default function CameraQRScanner() {
 
     if (result.success && result.mahasantri) {
       setScannedMahasantri(result.mahasantri);
-      setSuccessMessage(`Check-in Mahasantri ${result.mahasantri.nama} BERHASIL! Kunci Kamar ${result.mahasantri.nomorKamar} dapat diserahkan.`);
+      setSuccessMessage(
+        `Check-in Mahasantri ${result.mahasantri.nama} BERHASIL! Kunci ${result.mahasantri.gedung} Kamar ${result.mahasantri.nomorKamar} dapat diserahkan.`
+      );
       confetti({
         particleCount: 100,
         spread: 70,
@@ -236,8 +265,8 @@ export default function CameraQRScanner() {
   return (
     <div className="space-y-6">
       
-      {/* Hidden container for file scanning & hidden inputs */}
-      <div id="offscreen-qr-reader" className="hidden"></div>
+      {/* Hidden canvas for jsQR processing & hidden file camera input */}
+      <canvas ref={canvasRef} className="hidden" />
       <input
         ref={fileCameraInputRef}
         type="file"
@@ -254,36 +283,47 @@ export default function CameraQRScanner() {
           <div>
             <h2 className="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
               <Camera className="w-5 h-5 text-uin-primary" />
-              Scanner Barcode E-Checkin Pengurus
+              Scanner Barcode E-Checkin Mudabbir &amp; Pengurus
             </h2>
             <p className="text-xs text-slate-500">
-              Arahkan kamera ke E-Tiket Mahasantri saat tiba di lorong lantai (Jadwal: {SK_INFO.jadwal}).
+              Arahkan kamera HP ke barcode E-Tiket Mahasantri saat tiba di lorong lantai (Jadwal: {SK_INFO.jadwal}).
             </p>
           </div>
         </div>
 
-        {/* Action Buttons: Live Video Stream & Direct Snap */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* Action Buttons: Live Video Stream, Switch Camera, & Direct Snap */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           
           {!scannerActive ? (
             <button
               type="button"
               disabled={isStarting}
-              onClick={startScanner}
-              className="flex items-center justify-center gap-2 py-3.5 px-4 bg-uin-primary hover:bg-uin-secondary text-white font-bold text-sm rounded-2xl shadow-md transition-all"
+              onClick={() => startScanner()}
+              className="flex items-center justify-center gap-2 py-3.5 px-4 bg-uin-primary hover:bg-uin-secondary text-white font-bold text-sm rounded-2xl shadow-md transition-all sm:col-span-2"
             >
               <Video className="w-5 h-5 text-uin-accent" />
               <span>{isStarting ? 'Menyiapkan Kamera...' : 'Buka Live Video Scanner'}</span>
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={stopScanner}
-              className="flex items-center justify-center gap-2 py-3.5 px-4 bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm rounded-2xl shadow-md transition-all"
-            >
-              <X className="w-5 h-5" />
-              <span>Tutup Kamera Video</span>
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={stopScanner}
+                className="flex items-center justify-center gap-2 py-3.5 px-4 bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm rounded-2xl shadow-md transition-all"
+              >
+                <X className="w-5 h-5" />
+                <span>Tutup Kamera</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={switchCamera}
+                className="flex items-center justify-center gap-2 py-3.5 px-4 bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs sm:text-sm rounded-2xl border border-slate-700 shadow transition-all"
+              >
+                <SwitchCamera className="w-4 h-4 text-uin-accent" />
+                <span>Ganti Kamera ({facingMode === 'environment' ? 'Belakang' : 'Depan'})</span>
+              </button>
+            </>
           )}
 
           <button
@@ -292,12 +332,12 @@ export default function CameraQRScanner() {
             className="flex items-center justify-center gap-2 py-3.5 px-4 bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs sm:text-sm rounded-2xl border border-slate-700 shadow transition-all"
           >
             <Camera className="w-4 h-4 text-emerald-400" />
-            <span>Jepret / Foto QR Tiket (HP)</span>
+            <span>Jepret / Upload Foto QR</span>
           </button>
 
         </div>
 
-        {/* Live Camera Viewfinder Box (Native Video Stream) */}
+        {/* Live Camera Viewfinder Box (Native Video Stream + jsQR) */}
         {scannerActive && (
           <div className="relative w-full max-w-sm mx-auto overflow-hidden rounded-3xl border-4 border-uin-primary shadow-2xl bg-black aspect-square my-4">
             <video
@@ -422,14 +462,10 @@ export default function CameraQRScanner() {
             {/* Room Allocation Info */}
             <div className="bg-gradient-to-br from-uin-primary to-emerald-800 text-white p-4 rounded-2xl shadow text-center space-y-1">
               <span className="text-[10px] uppercase font-bold tracking-wider text-uin-accent">Alokasi Kamar</span>
-              <div className="text-2xl font-extrabold">Kamar {scannedMahasantri.nomorKamar}</div>
-              <div className="text-sm font-semibold text-emerald-200">
+              <div className="text-xl font-extrabold">{scannedMahasantri.gedung}</div>
+              <div className="text-2xl font-black">Kamar {scannedMahasantri.nomorKamar}</div>
+              <div className="text-xs font-semibold text-emerald-200">
                 Lantai {scannedMahasantri.lantai} &bull; Bed {scannedMahasantri.bedNumber}
-              </div>
-              <div className="text-[11px] text-emerald-100 pt-1">
-                {scannedMahasantri.jajaran === 'BELAKANG'
-                  ? `Jajaran Belakang (${scannedMahasantri.lantai}13 - ${scannedMahasantri.lantai}16)`
-                  : `Jajaran Depan (${scannedMahasantri.lantai}09 - ${scannedMahasantri.lantai}12)`}
               </div>
             </div>
 
@@ -454,7 +490,7 @@ export default function CameraQRScanner() {
 
             <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">Nama Petugas Pengurus Lantai / Mudabbir:</label>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">Nama Petugas Pengurus / Mudabbir:</label>
                 <input
                   type="text"
                   value={petugasNama}
@@ -499,6 +535,7 @@ export default function CameraQRScanner() {
                 setScannedMahasantri(null);
                 setSuccessMessage(null);
                 setErrorMessage(null);
+                startScanner();
               }}
               className="text-xs text-slate-500 hover:text-slate-800 underline font-medium"
             >

@@ -585,6 +585,7 @@ function DaftarPageContent() {
             rooms={rooms}
             selectedKamarId={selectedKamar?.id || null}
             selectedBedNumber={selectedBedNumber}
+            genderConstraint={jenisKelamin}
             isInternasional={isInternasional}
             onSelectBed={handleSelectBed}
           />

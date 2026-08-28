@@ -100,7 +100,7 @@ function ScannerPageContent() {
                   </div>
                   <div>
                     <span className="font-bold text-slate-800 block">{log.nama}</span>
-                    <span className="text-slate-500 font-mono">NIM/NISN: {log.nimNisn}</span>
+                    <span className="text-slate-500 font-mono">NIM/NISN: {log.mahasantriNimNisn || log.nimNisn}</span>
                   </div>
                 </div>
 

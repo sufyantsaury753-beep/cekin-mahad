@@ -11,26 +11,25 @@ export const SK_INFO = {
   lokasiPutri: 'Asrama Ma\'had Jadid',
 };
 
-// Generate default rooms for Ma'had Qodim (Putra) - Lantai 1 to 5
+// Generate rooms for Ma'had Jadid (Putra 09-16, Putri 01-08 & 17-24) and Ma'had Qodim (Full Putri 01-24) - Lantai 2 to 5
 export function generateInitialRooms(): Kamar[] {
   const rooms: Kamar[] = [];
-  const floors = [1, 2, 3, 4, 5];
+  const floors = [2, 3, 4, 5];
 
   floors.forEach((floor) => {
-    // Jajaran Depan: 4 kamar (09 - 12)
-    for (let i = 9; i <= 12; i++) {
+    // --- 1. GEDUNG MA'HAD JADID (Putra & Putri) ---
+    // A. Putri Barat (Kamar 01 - 08)
+    for (let i = 1; i <= 8; i++) {
       const roomNum = `${floor}${i < 10 ? '0' + i : i}`;
-      const isLantai2 = floor === 2; // Lantai 2 is International by default
       rooms.push({
-        id: `K-${roomNum}`,
+        id: `JADID-${roomNum}`,
         nomor: roomNum,
         lantai: floor,
-        jajaran: 'DEPAN',
-        gedung: "Ma'had Qodim",
-        gender: 'L',
-        kategori: isLantai2 ? 'INTERNASIONAL' : 'UMUM',
-        isLocked: isLantai2,
-        lockReason: isLantai2 ? 'Khusus Mahasantri Internasional' : undefined,
+        jajaran: 'PUTRI_BARAT',
+        gedung: "Ma'had Jadid",
+        gender: 'P',
+        kategori: 'UMUM',
+        isLocked: false,
         kapasitas: 4,
         beds: [
           { bedNumber: 1, isOccupied: false },
@@ -41,20 +40,85 @@ export function generateInitialRooms(): Kamar[] {
       });
     }
 
-    // Jajaran Belakang: 4 kamar (13 - 16)
-    for (let i = 13; i <= 16; i++) {
-      const roomNum = `${floor}${i}`;
-      const isLantai2 = floor === 2;
+    // B. Putra (Kamar 09 - 16)
+    for (let i = 9; i <= 16; i++) {
+      const roomNum = `${floor}${i < 10 ? '0' + i : i}`;
       rooms.push({
-        id: `K-${roomNum}`,
+        id: `JADID-${roomNum}`,
+        nomor: roomNum,
+        lantai: floor,
+        jajaran: 'PUTRA',
+        gedung: "Ma'had Jadid",
+        gender: 'L',
+        kategori: 'UMUM',
+        isLocked: false,
+        kapasitas: 4,
+        beds: [
+          { bedNumber: 1, isOccupied: false },
+          { bedNumber: 2, isOccupied: false },
+          { bedNumber: 3, isOccupied: false },
+          { bedNumber: 4, isOccupied: false },
+        ],
+      });
+    }
+
+    // C. Putri Timur (Kamar 17 - 24)
+    for (let i = 17; i <= 24; i++) {
+      const roomNum = `${floor}${i}`;
+      rooms.push({
+        id: `JADID-${roomNum}`,
+        nomor: roomNum,
+        lantai: floor,
+        jajaran: 'PUTRI_TIMUR',
+        gedung: "Ma'had Jadid",
+        gender: 'P',
+        kategori: 'UMUM',
+        isLocked: false,
+        kapasitas: 4,
+        beds: [
+          { bedNumber: 1, isOccupied: false },
+          { bedNumber: 2, isOccupied: false },
+          { bedNumber: 3, isOccupied: false },
+          { bedNumber: 4, isOccupied: false },
+        ],
+      });
+    }
+
+    // --- 2. GEDUNG MA'HAD QODIM (Full Putri Kamar 01 - 24) ---
+    // A. Putri Jajaran Depan (Kamar 01 - 12)
+    for (let i = 1; i <= 12; i++) {
+      const roomNum = `${floor}${i < 10 ? '0' + i : i}`;
+      rooms.push({
+        id: `QODIM-${roomNum}`,
+        nomor: roomNum,
+        lantai: floor,
+        jajaran: 'DEPAN',
+        gedung: "Ma'had Qodim",
+        gender: 'P',
+        kategori: 'UMUM',
+        isLocked: false,
+        kapasitas: 4,
+        beds: [
+          { bedNumber: 1, isOccupied: false },
+          { bedNumber: 2, isOccupied: false },
+          { bedNumber: 3, isOccupied: false },
+          { bedNumber: 4, isOccupied: false },
+        ],
+      });
+    }
+
+    // B. Putri Jajaran Belakang (Kamar 13 - 24)
+    for (let i = 13; i <= 24; i++) {
+      const roomNum = `${floor}${i}`;
+      rooms.push({
+        id: `QODIM-${roomNum}`,
         nomor: roomNum,
         lantai: floor,
         jajaran: 'BELAKANG',
         gedung: "Ma'had Qodim",
-        gender: 'L',
-        kategori: isLantai2 ? 'INTERNASIONAL' : 'UMUM',
-        isLocked: isLantai2,
-        lockReason: isLantai2 ? 'Khusus Mahasantri Internasional' : undefined,
+        gender: 'P',
+        kategori: 'UMUM',
+        isLocked: false,
         kapasitas: 4,
         beds: [
           { bedNumber: 1, isOccupied: false },
@@ -387,16 +451,22 @@ export const INITIAL_MAHASANTRI: Mahasantri[] = [
     noWaWali: '081298765432',
     isInternasional: false,
     pasFotoUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-    kamarId: 'K-413',
+    gedung: "Ma'had Jadid",
+    kamarId: 'JADID-413',
     nomorKamar: '413',
     lantai: 4,
-    jajaran: 'BELAKANG',
+    jajaran: 'PUTRA',
     bedNumber: 1,
     statusCheckIn: 'CHECKED_IN',
     checkInTimestamp: '2026-08-19T08:30:00Z',
-    checkedInBy: 'Ustadz Ridwan (Pengurus Lt.4)',
+    petugasCheckIn: 'Ustadz Ridwan (Mudabbir Lt.4)',
+    checkedInBy: 'Ustadz Ridwan (Mudabbir Lt.4)',
     catatanBarang: 'Barang aman sesuai ketentuan Ma\'had.',
+    catatanBarangCheckIn: 'Barang aman sesuai ketentuan Ma\'had.',
+    qrCodeToken: 'QR-MAHAD-2530311086-413-1',
     qrToken: 'QR-MAHAD-2530311086-413-1',
+    skNomor: SK_INFO.nomor,
+    createdAt: '2026-08-15T08:30:00Z',
     registeredAt: '2026-08-15T08:30:00Z',
   },
   {
@@ -412,13 +482,17 @@ export const INITIAL_MAHASANTRI: Mahasantri[] = [
     noWaWali: '085787654321',
     isInternasional: false,
     pasFotoUrl: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80',
-    kamarId: 'K-513',
+    gedung: "Ma'had Jadid",
+    kamarId: 'JADID-513',
     nomorKamar: '513',
     lantai: 5,
-    jajaran: 'BELAKANG',
+    jajaran: 'PUTRA',
     bedNumber: 2,
     statusCheckIn: 'REGISTERED',
+    qrCodeToken: 'QR-MAHAD-0067999651-513-2',
     qrToken: 'QR-MAHAD-0067999651-513-2',
+    skNomor: SK_INFO.nomor,
+    createdAt: '2026-08-16T14:20:00Z',
     registeredAt: '2026-08-16T14:20:00Z',
   },
   {
@@ -435,15 +509,19 @@ export const INITIAL_MAHASANTRI: Mahasantri[] = [
     noWaWali: '+63998765432',
     isInternasional: true,
     pasFotoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    kamarId: 'K-209',
+    gedung: "Ma'had Jadid",
+    kamarId: 'JADID-209',
     nomorKamar: '209',
     lantai: 2,
-    jajaran: 'DEPAN',
+    jajaran: 'PUTRA',
     bedNumber: 1,
     statusCheckIn: 'REGISTERED',
+    qrCodeToken: 'QR-MAHAD-INT-PH-846-209-1',
     qrToken: 'QR-MAHAD-INT-PH-846-209-1',
+    skNomor: SK_INFO.nomor,
+    createdAt: '2026-08-17T09:00:00Z',
     registeredAt: '2026-08-17T09:00:00Z',
-  }
+  },
 ];
 
 export const FAKULTAS_LIST = [
@@ -472,51 +550,168 @@ export const DEFAULT_ADMIN = {
   role: 'ADMIN' as const,
 };
 
+export const DEFAULT_SK_PENGURUS_LIST: import('./types').SKPengurus[] = [
+  // --- MUDABBIR PUTRA (GEDUNG JADID) ---
+  {
+    id: 'SKP-JD-01',
+    nama: 'Ustadz Ahmad Fauzi, S.Pd.',
+    nim: '1908102001',
+    jenisKelamin: 'L',
+    jabatan: 'Mudabbir Lantai 2 (Putra)',
+    gedung: "Ma'had Jadid",
+    lantai: 2,
+    kamarKhusus: '209',
+    noWa: '08123456721',
+    password: 'mahad2026',
+    isAktif: true,
+    skNomor: 'SK-PENGURUS/01/2026',
+  },
+  {
+    id: 'SKP-JD-02',
+    nama: 'Ustadz Farhan Ramadhan, M.Ag.',
+    nim: '1908102002',
+    jenisKelamin: 'L',
+    jabatan: 'Mudabbir Lantai 3 (Putra)',
+    gedung: "Ma'had Jadid",
+    lantai: 3,
+    kamarKhusus: '309',
+    noWa: '08123456722',
+    password: 'mahad2026',
+    isAktif: true,
+    skNomor: 'SK-PENGURUS/01/2026',
+  },
+  {
+    id: 'SKP-JD-03',
+    nama: 'Ustadz Ridwan Al-Hafidz',
+    nim: '1908102003',
+    jenisKelamin: 'L',
+    jabatan: 'Mudabbir Lantai 4 (Putra)',
+    gedung: "Ma'had Jadid",
+    lantai: 4,
+    kamarKhusus: '409',
+    noWa: '08123456723',
+    password: 'mahad2026',
+    isAktif: true,
+    skNomor: 'SK-PENGURUS/01/2026',
+  },
+  {
+    id: 'SKP-JD-04',
+    nama: 'Ustadz Zaky Mubarak, S.Ag.',
+    nim: '1908102004',
+    jenisKelamin: 'L',
+    jabatan: 'Mudabbir Lantai 5 (Putra)',
+    gedung: "Ma'had Jadid",
+    lantai: 5,
+    kamarKhusus: '509',
+    noWa: '08123456724',
+    password: 'mahad2026',
+    isAktif: true,
+    skNomor: 'SK-PENGURUS/01/2026',
+  },
+  // --- MUDABBIRAH PUTRI (GEDUNG JADID) ---
+  {
+    id: 'SKP-JD-05',
+    nama: 'Ustadzah Siti Aisyah, S.Pd.',
+    nim: '1908103001',
+    jenisKelamin: 'P',
+    jabatan: 'Mudabbirah Lantai 2 (Putri)',
+    gedung: "Ma'had Jadid",
+    lantai: 2,
+    kamarKhusus: '201',
+    noWa: '08123456731',
+    password: 'mahad2026',
+    isAktif: true,
+    skNomor: 'SK-PENGURUS/01/2026',
+  },
+  {
+    id: 'SKP-JD-06',
+    nama: 'Ustadzah Nurul Hidayah, M.Pd.',
+    nim: '1908103002',
+    jenisKelamin: 'P',
+    jabatan: 'Mudabbirah Lantai 3 (Putri)',
+    gedung: "Ma'had Jadid",
+    lantai: 3,
+    kamarKhusus: '301',
+    noWa: '08123456732',
+    password: 'mahad2026',
+    isAktif: true,
+    skNomor: 'SK-PENGURUS/01/2026',
+  },
+  // --- MUDABBIRAH PUTRI (GEDUNG QODIM) ---
+  {
+    id: 'SKP-QD-01',
+    nama: 'Ustadzah Fatimah Zahra, S.Ag.',
+    nim: '1908104001',
+    jenisKelamin: 'P',
+    jabatan: 'Mudabbirah Lantai 2 (Full Putri)',
+    gedung: "Ma'had Qodim",
+    lantai: 2,
+    kamarKhusus: '201',
+    noWa: '08123456741',
+    password: 'mahad2026',
+    isAktif: true,
+    skNomor: 'SK-PENGURUS/01/2026',
+  },
+  {
+    id: 'SKP-QD-02',
+    nama: 'Ustadzah Khadijah Al-Kubro',
+    nim: '1908104002',
+    jenisKelamin: 'P',
+    jabatan: 'Mudabbirah Lantai 3 (Full Putri)',
+    gedung: "Ma'had Qodim",
+    lantai: 3,
+    kamarKhusus: '301',
+    noWa: '08123456742',
+    password: 'mahad2026',
+    isAktif: true,
+    skNomor: 'SK-PENGURUS/01/2026',
+  },
+];
+
 export const DEFAULT_PENGURUS_LIST = [
   {
-    id: 'PGR-LT1',
-    username: 'pengurus.lt1',
-    nama: 'Ustadz Hasan (Pengurus Lantai 1)',
-    lantai: 1,
-    gedung: "Ma'had Qodim",
-    password: 'mahad2026',
-    noWa: '08123456701',
-  },
-  {
-    id: 'PGR-LT2',
-    username: 'pengurus.lt2',
-    nama: 'Ustadz Farhan (Pengurus Lantai 2 - Internasional)',
+    id: 'PGR-JD-LT2-L',
+    username: 'mudabbir.jadid.lt2',
+    nama: 'Ustadz Ahmad Fauzi (Mudabbir Jadid Lt.2 Putra)',
+    jenisKelamin: 'L' as const,
+    jabatan: 'Mudabbir Lantai 2',
     lantai: 2,
-    gedung: "Ma'had Qodim",
+    gedung: "Ma'had Jadid" as const,
     password: 'mahad2026',
-    noWa: '08123456702',
+    noWa: '08123456721',
   },
   {
-    id: 'PGR-LT3',
-    username: 'pengurus.lt3',
-    nama: 'Ustadz Ridwan (Pengurus Lantai 3)',
+    id: 'PGR-JD-LT3-L',
+    username: 'mudabbir.jadid.lt3',
+    nama: 'Ustadz Farhan (Mudabbir Jadid Lt.3 Putra)',
+    jenisKelamin: 'L' as const,
+    jabatan: 'Mudabbir Lantai 3',
     lantai: 3,
-    gedung: "Ma'had Qodim",
+    gedung: "Ma'had Jadid" as const,
     password: 'mahad2026',
-    noWa: '08123456703',
+    noWa: '08123456722',
   },
   {
-    id: 'PGR-LT4',
-    username: 'pengurus.lt4',
-    nama: 'Ustadz Zaky (Pengurus Lantai 4)',
-    lantai: 4,
-    gedung: "Ma'had Qodim",
+    id: 'PGR-QD-LT2-P',
+    username: 'mudabbirah.qodim.lt2',
+    nama: 'Ustadzah Fatimah (Mudabbirah Qodim Lt.2 Putri)',
+    jenisKelamin: 'P' as const,
+    jabatan: 'Mudabbirah Lantai 2',
+    lantai: 2,
+    gedung: "Ma'had Qodim" as const,
     password: 'mahad2026',
-    noWa: '08123456704',
+    noWa: '08123456741',
   },
   {
-    id: 'PGR-LT5',
-    username: 'pengurus.lt5',
-    nama: 'Ustadz Muhsin (Pengurus Lantai 5)',
-    lantai: 5,
-    gedung: "Ma'had Qodim",
+    id: 'PGR-QD-LT3-P',
+    username: 'mudabbirah.qodim.lt3',
+    nama: 'Ustadzah Khadijah (Mudabbirah Qodim Lt.3 Putri)',
+    jenisKelamin: 'P' as const,
+    jabatan: 'Mudabbirah Lantai 3',
+    lantai: 3,
+    gedung: "Ma'had Qodim" as const,
     password: 'mahad2026',
-    noWa: '08123456705',
+    noWa: '08123456742',
   },
 ];
 

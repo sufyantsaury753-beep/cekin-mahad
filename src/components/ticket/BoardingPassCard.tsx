@@ -130,7 +130,7 @@ export default function BoardingPassCard({ mahasantri }: BoardingPassCardProps) 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
               <div className="bg-white/90 p-2.5 rounded-xl border border-emerald-200/60 shadow-sm">
                 <span className="text-[10px] text-slate-500 uppercase font-semibold block">Gedung</span>
-                <span className="text-sm font-bold text-slate-800">{mahasantri.jenisKelamin === 'L' ? 'Ma\'had Qodim' : 'Ma\'had Jadid'}</span>
+                <span className="text-sm font-bold text-slate-800">{mahasantri.gedung || (mahasantri.jenisKelamin === 'L' ? "Ma'had Jadid" : "Ma'had Qodim")}</span>
               </div>
               <div className="bg-white/90 p-2.5 rounded-xl border border-emerald-200/60 shadow-sm">
                 <span className="text-[10px] text-slate-500 uppercase font-semibold block">Lantai</span>
@@ -166,13 +166,13 @@ export default function BoardingPassCard({ mahasantri }: BoardingPassCardProps) 
                 Tunjukkan QR ini langsung ke Pengurus di <strong className="text-slate-700">Lantai {mahasantri.lantai} Lorong Kamar {mahasantri.nomorKamar}</strong> pada jadwal 19–21 Agustus 2026.
               </p>
               <span className="text-[10px] font-mono text-slate-400 pt-1">
-                Token: {mahasantri.qrToken}
+                Token: {mahasantri.qrCodeToken || mahasantri.qrToken || `QR-MAHAD-${mahasantri.nimNisn}`}
               </span>
             </div>
 
             <div className="p-3 bg-white rounded-2xl border-2 border-slate-300 shadow-sm shrink-0 flex flex-col items-center">
               <QRCodeSVG
-                value={mahasantri.qrToken}
+                value={mahasantri.qrCodeToken || mahasantri.qrToken || `QR-MAHAD-${mahasantri.nimNisn}`}
                 size={130}
                 level="H"
                 includeMargin={false}
@@ -189,8 +189,10 @@ export default function BoardingPassCard({ mahasantri }: BoardingPassCardProps) 
                 Telah Check-In &amp; Kunci Diserahkan
               </div>
               <p>Waktu: {new Date(mahasantri.checkInTimestamp || '').toLocaleString('id-ID')}</p>
-              <p>Petugas Lantai: {mahasantri.checkedInBy || 'Pengurus Kamar'}</p>
-              {mahasantri.catatanBarang && <p>Catatan: {mahasantri.catatanBarang}</p>}
+              <p>Petugas: {mahasantri.petugasCheckIn || mahasantri.checkedInBy || 'Mudabbir / Pengurus'}</p>
+              {(mahasantri.catatanBarangCheckIn || mahasantri.catatanBarang) && (
+                <p>Catatan: {mahasantri.catatanBarangCheckIn || mahasantri.catatanBarang}</p>
+              )}
             </div>
           )}
 
@@ -198,7 +200,7 @@ export default function BoardingPassCard({ mahasantri }: BoardingPassCardProps) 
 
         {/* Footer info inside card */}
         <div className="bg-slate-100 px-6 py-3 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500 font-mono">
-          <span>Tgl Terbit: {new Date(mahasantri.registeredAt).toLocaleDateString('id-ID')}</span>
+          <span>Tgl Terbit: {new Date(mahasantri.createdAt || mahasantri.registeredAt || Date.now()).toLocaleDateString('id-ID')}</span>
           <span>معـهـدي جنـتـي &bull; {SK_INFO.mudir}</span>
         </div>
 

@@ -179,7 +179,7 @@ function LoginForm() {
     setError(null);
     setLoading(true);
 
-    const res = MahadAuth.loginAdmin(admEmail, admPassword);
+    const res = MahadAuth.loginAdmin(admPassword);
     setLoading(false);
 
     if (res.success && res.session) {
