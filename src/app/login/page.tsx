@@ -40,12 +40,13 @@ function LoginForm() {
   const [mhsNoWa, setMhsNoWa] = useState('');
   const [showPin, setShowPin] = useState(false);
 
-  // Pengurus Login State
+  // Pengurus Login State (Dropdown with ALL Pengurus, Password always BLANK)
+  const [pengurusList, setPengurusList] = useState<Array<{ id: string; username: string; nama: string; gedung: string; lantai: number; jabatan?: string }>>([]);
   const [pgrUsername, setPgrUsername] = useState('');
   const [pgrPassword, setPgrPassword] = useState('');
   const [showPgrPassword, setShowPgrPassword] = useState(false);
 
-  // Admin Login State
+  // Admin Login State (Strictly BLANK, Anti-Autofill)
   const [admEmail, setAdmEmail] = useState('');
   const [admPassword, setAdmPassword] = useState('');
   const [showAdmPassword, setShowAdmPassword] = useState(false);
@@ -54,6 +55,43 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Load all dynamic and default Pengurus into dropdown list
+  useEffect(() => {
+    const dynamic = MahadStore.getSKPengurusList();
+    const combined: Array<{ id: string; username: string; nama: string; gedung: string; lantai: number; jabatan?: string }> = [];
+
+    // 1. Add all dynamic pengurus (including newly added ones like Raihan, Han, etc.)
+    dynamic.forEach((p) => {
+      combined.push({
+        id: p.id,
+        username: p.id,
+        nama: p.nama,
+        gedung: p.gedung,
+        lantai: p.lantai,
+        jabatan: p.jabatan,
+      });
+    });
+
+    // 2. Add default pengurus if not already in list
+    DEFAULT_PENGURUS_LIST.forEach((dp) => {
+      if (!combined.some((c) => c.username === dp.username || c.id === dp.id || c.nama === dp.nama)) {
+        combined.push({
+          id: dp.id,
+          username: dp.username,
+          nama: dp.nama,
+          gedung: dp.gedung,
+          lantai: dp.lantai,
+          jabatan: dp.jabatan,
+        });
+      }
+    });
+
+    setPengurusList(combined);
+    if (combined.length > 0) {
+      setPgrUsername(combined[0].username || combined[0].id);
+    }
+  }, []);
 
   // Check if already logged in
   useEffect(() => {
@@ -225,11 +263,11 @@ function LoginForm() {
           <User className="w-4 h-4" />
           <span>Mahasantri</span>
         </button>
-
         <button
           type="button"
           onClick={() => {
             setActiveRole('PENGURUS');
+            setPgrPassword('');
             setError(null);
           }}
           className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl transition-all ${
@@ -246,6 +284,8 @@ function LoginForm() {
           type="button"
           onClick={() => {
             setActiveRole('ADMIN');
+            setAdmEmail('');
+            setAdmPassword('');
             setError(null);
           }}
           className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl transition-all ${
@@ -338,7 +378,7 @@ function LoginForm() {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Buat PIN Rahasia 6-Digit <span className="text-rose-500">*</span>
+                    Buat PIN Rahasia Baru (6 Digit Angka) <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
                     <Lock className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
@@ -363,7 +403,7 @@ function LoginForm() {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Konfirmasi Ulang PIN 6-Digit <span className="text-rose-500">*</span>
+                    Ulangi Konfirmasi PIN (6 Digit) <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
                     <Lock className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
@@ -371,7 +411,7 @@ function LoginForm() {
                       type={showPin ? 'text' : 'password'}
                       maxLength={6}
                       required
-                      placeholder="Ketik ulang PIN yang sama"
+                      placeholder="Ulangi 6 digit PIN"
                       value={mhsConfirmPin}
                       onChange={(e) => setMhsConfirmPin(e.target.value.replace(/\D/g, ''))}
                       className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-uin-primary/30 outline-none tracking-widest"
@@ -497,23 +537,26 @@ function LoginForm() {
 
         {/* TAB 2: PENGURUS LORONG LANTAI LOGIN */}
         {activeRole === 'PENGURUS' && (
-          <form onSubmit={handleLoginPengurus} className="space-y-4">
+          <form onSubmit={handleLoginPengurus} className="space-y-4" autoComplete="off">
             
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Username / ID Petugas Pengurus
+                Pilih Nama Petugas Pengurus / Mudabbir
               </label>
-              <div className="relative">
-                <User className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  required
-                  placeholder="Masukkan Username atau ID SK Pengurus"
-                  value={pgrUsername}
-                  onChange={(e) => setPgrUsername(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-uin-primary/30 outline-none"
-                />
-              </div>
+              <select
+                value={pgrUsername}
+                onChange={(e) => {
+                  setPgrUsername(e.target.value);
+                  setPgrPassword(''); // Password remains empty on change
+                }}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-uin-primary/30 outline-none"
+              >
+                {pengurusList.map((p) => (
+                  <option key={p.id || p.username} value={p.username || p.id}>
+                    {p.nama} • {p.gedung} Lt.{p.lantai}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
@@ -525,6 +568,7 @@ function LoginForm() {
                 <input
                   type={showPgrPassword ? 'text' : 'password'}
                   required
+                  autoComplete="new-password"
                   placeholder="Masukkan Password Pengurus"
                   value={pgrPassword}
                   onChange={(e) => setPgrPassword(e.target.value)}
@@ -552,10 +596,14 @@ function LoginForm() {
           </form>
         )}
 
-        {/* TAB 3: ADMIN LOGIN */}
+        {/* TAB 3: ADMIN LOGIN (STRICTLY BLANK & BULLETPROOF ANTI-AUTOFILL) */}
         {activeRole === 'ADMIN' && (
-          <form onSubmit={handleLoginAdmin} className="space-y-4">
+          <form onSubmit={handleLoginAdmin} className="space-y-4" autoComplete="off">
             
+            {/* Hidden dummy input to prevent browser password managers from auto-filling */}
+            <input type="text" name="prevent_autofill_fake_user" style={{ display: 'none' }} tabIndex={-1} />
+            <input type="password" name="prevent_autofill_fake_pass" style={{ display: 'none' }} tabIndex={-1} />
+
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                 Email Superadmin
@@ -563,7 +611,12 @@ function LoginForm() {
               <div className="relative">
                 <User className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
                 <input
-                  type="email"
+                  type="text"
+                  name="admin_login_auth_identity"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck="false"
                   required
                   placeholder="admin@mahad.uinssc.ac.id"
                   value={admEmail}
@@ -581,6 +634,8 @@ function LoginForm() {
                 <Lock className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
                 <input
                   type={showAdmPassword ? 'text' : 'password'}
+                  name="admin_login_auth_secret_key"
+                  autoComplete="new-password"
                   required
                   placeholder="Masukkan Password Superadmin"
                   value={admPassword}
