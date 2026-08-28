@@ -745,13 +745,24 @@ export function getShortJurusan(jurusan?: string, fakultas?: string): string {
   if (clean.includes('MANAJEMEN PENDIDIKAN ISLAM') || clean === 'MPI') return 'MPI';
   if (clean.includes('GURU MADRASAH IBTIDAIYAH') || clean.includes('PGMI')) return 'PGMI';
   if (clean.includes('ANAK USIA DINI') || clean.includes('PIAUD')) return 'PIAUD';
-  if (clean.includes('BAHASA INGGRIS') || clean.includes('TBI')) return 'TBI';
-  if (clean.includes('MATEMATIKA')) return 'TMATH';
-  if (clean.includes('BIOLOGI') || clean.includes('TBIO')) return 'TBIO';
-  if (clean.includes('BAHASA INDONESIA')) return 'TBIND';
-  if (clean.includes('TADRIS IPS')) return 'TIPS';
-  if (clean.includes('KIMIA')) return 'TKIM';
-  if (clean.includes('FISIKA')) return 'TFIS';
+  
+  // Tadris (Keguruan) vs Sains Murni
+  if (clean.includes('TADRIS MATEMATIKA') || clean.includes('T.MATEMATIKA') || clean.includes('T. MATEMATIKA') || clean.includes('T.MTK') || clean.includes('T. MTK') || clean === 'T-MTK' || clean === 'TMATH') return 'T-MTK';
+  if (clean.includes('MATEMATIKA') || clean === 'MTK') return 'MTK';
+
+  if (clean.includes('TADRIS BIOLOGI') || clean.includes('TADRIS IPA') || clean.includes('T.BIOLOGI') || clean.includes('T. BIO') || clean === 'T-BIO' || clean === 'TBIO') return 'T-BIO';
+  if (clean.includes('BIOTEKNOLOGI')) return 'BIOTEK';
+  if (clean.includes('BIOLOGI') || clean === 'BIO') return 'BIO';
+
+  if (clean.includes('TADRIS FISIKA') || clean.includes('T.FISIKA') || clean.includes('T. FIS') || clean === 'T-FIS' || clean === 'TFIS') return 'T-FIS';
+  if (clean.includes('FISIKA') || clean === 'FIS') return 'FIS';
+
+  if (clean.includes('TADRIS KIMIA') || clean.includes('T.KIMIA') || clean.includes('T. KIM') || clean === 'T-KIM' || clean === 'TKIM') return 'T-KIM';
+  if (clean.includes('KIMIA') || clean === 'KIM') return 'KIM';
+
+  if (clean.includes('TADRIS BAHASA INGGRIS') || clean.includes('T.INGGRIS') || clean.includes('TBI') || clean.includes('BAHASA INGGRIS')) return 'TBI';
+  if (clean.includes('TADRIS BAHASA INDONESIA') || clean.includes('T.INDONESIA') || clean.includes('TBIND') || clean.includes('BAHASA INDONESIA')) return 'TBIND';
+  if (clean.includes('TADRIS IPS') || clean === 'TIPS') return 'TIPS';
 
   if (clean.includes('HUKUM KELUARGA') || clean.includes('AHWAL')) return 'HKI';
   if (clean.includes('HUKUM EKONOMI') || clean.includes('MUAMALAH') || clean === 'HES') return 'HES';
@@ -767,9 +778,12 @@ export function getShortJurusan(jurusan?: string, fakultas?: string): string {
 
   if (clean.includes('EKONOMI SYARIAH') || clean === 'ESY') return 'ESY';
   if (clean.includes('PERBANKAN SYARIAH') || clean === 'PBS') return 'PBS';
+  if (clean.includes('AKUNTANSI SYARIAH') || clean === 'AKSYAR') return 'AKSYAR';
+  if (clean.includes('ZAKAT') || clean.includes('WAKAF') || clean === 'MAZAWA') return 'MAZAWA';
+  if (clean.includes('PARIWISATA') || clean === 'PARSYAR') return 'PARSYAR';
+
   if (clean.includes('INFORMATIKA') || clean === 'TI') return 'TI';
   if (clean.includes('SISTEM INFORMASI') || clean === 'SI') return 'SI';
-  if (clean.includes('BIOTEKNOLOGI')) return 'BIOTEK';
 
   return clean;
 }
@@ -782,12 +796,18 @@ export const JURUSAN_FULL_NAMES: Record<string, string> = {
   'PGMI': 'Pendidikan Guru Madrasah Ibtidaiyah',
   'PIAUD': 'Pendidikan Islam Anak Usia Dini',
   'TBI': 'Tadris Bahasa Inggris',
-  'TMATH': 'Tadris Matematika',
-  'TBIO': 'Tadris IPA Biologi',
   'TBIND': 'Tadris Bahasa Indonesia',
   'TIPS': 'Tadris Ilmu Pengetahuan Sosial (IPS)',
-  'TKIM': 'Tadris Kimia',
-  'TFIS': 'Tadris Fisika',
+  
+  // Tadris vs Sains
+  'T-MTK': 'Tadris Matematika',
+  'MTK': 'Matematika',
+  'T-BIO': 'Tadris IPA Biologi',
+  'BIO': 'Biologi',
+  'T-FIS': 'Tadris Fisika',
+  'FIS': 'Fisika',
+  'T-KIM': 'Tadris Kimia',
+  'KIM': 'Kimia',
 
   'HKI': 'Hukum Keluarga Islam (Ahwal Syakhsiyyah)',
   'HES': 'Hukum Ekonomi Syariah (Muamalah)',

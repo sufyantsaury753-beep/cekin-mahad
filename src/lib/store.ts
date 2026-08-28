@@ -258,19 +258,53 @@ export const MahadStore = {
     this.saveSKList(list);
   },
 
-  importSKList(newList: SKMahasantri[]) {
-    const list = this.getSKList();
-    newList.forEach((newItem) => {
-      const idx = list.findIndex(
-        (x) => x.nimNisn.trim().toLowerCase() === newItem.nimNisn.trim().toLowerCase()
-      );
-      if (idx >= 0) {
-        list[idx] = newItem;
-      } else {
-        list.push(newItem);
+  importSKList(newList: SKMahasantri[], replaceMode: boolean = true) {
+    const existingList = this.getSKList();
+    let finalList: SKMahasantri[] = [];
+
+    if (replaceMode) {
+      // REPLACE MODE: Replace entire list with new clean list, but preserve student PINs & registered phones
+      finalList = newList.map((newItem) => {
+        const matched = existingList.find(
+          (x) => x.nimNisn.trim().toLowerCase() === newItem.nimNisn.trim().toLowerCase()
+        );
+        return {
+          ...newItem,
+          pin: matched?.pin || newItem.pin,
+          noWaRegistered: matched?.noWaRegistered || newItem.noWaRegistered,
+          activatedAt: matched?.activatedAt || newItem.activatedAt,
+        };
+      });
+
+      // Clear old records in Supabase and re-seed clean list
+      if (isSupabaseConfigured()) {
+        supabase.from('sk_mahasantri').delete().neq('nim_nisn', 'dummy_xyz').then(() => {
+          this.saveSKList(finalList);
+        });
+        this.saveSKListLocally(finalList);
+        return;
       }
-    });
-    this.saveSKList(list);
+    } else {
+      // MERGE MODE
+      finalList = [...existingList];
+      newList.forEach((newItem) => {
+        const idx = finalList.findIndex(
+          (x) => x.nimNisn.trim().toLowerCase() === newItem.nimNisn.trim().toLowerCase()
+        );
+        if (idx >= 0) {
+          finalList[idx] = {
+            ...newItem,
+            pin: finalList[idx].pin || newItem.pin,
+            noWaRegistered: finalList[idx].noWaRegistered || newItem.noWaRegistered,
+            activatedAt: finalList[idx].activatedAt || newItem.activatedAt,
+          };
+        } else {
+          finalList.push(newItem);
+        }
+      });
+    }
+
+    this.saveSKList(finalList);
   },
 
   // Reset PIN for a student (Helpdesk Admin tool)

@@ -28,6 +28,7 @@ export default function SKUploadModal({ isOpen, onClose, onSuccess }: SKUploadMo
   const [file, setFile] = useState<File | null>(null);
   const [isParsing, setIsParsing] = useState(false);
   const [parsedData, setParsedData] = useState<SKMahasantri[]>([]);
+  const [importMode, setImportMode] = useState<'replace' | 'merge'>('replace');
   const [error, setError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -71,7 +72,7 @@ export default function SKUploadModal({ isOpen, onClose, onSuccess }: SKUploadMo
   const handleConfirmImport = () => {
     if (parsedData.length === 0) return;
 
-    MahadStore.importSKList(parsedData);
+    MahadStore.importSKList(parsedData, importMode === 'replace');
     setIsSuccess(true);
     setTimeout(() => {
       onSuccess(parsedData.length);
@@ -165,7 +166,45 @@ export default function SKUploadModal({ isOpen, onClose, onSuccess }: SKUploadMo
 
         {/* Parsed Preview Table */}
         {parsedData.length > 0 && !isSuccess && (
-          <div className="space-y-3">
+          <div className="space-y-4">
+            {/* Import Mode Selector */}
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+              <span className="text-xs font-bold text-slate-700 block">Metode Penyimpanan SK:</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <label className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer transition-all ${importMode === 'replace' ? 'bg-emerald-50/80 border-emerald-500 text-emerald-950 font-bold shadow-sm' : 'bg-white border-slate-200 text-slate-600'}`}>
+                  <input
+                    type="radio"
+                    name="importMode"
+                    checked={importMode === 'replace'}
+                    onChange={() => setImportMode('replace')}
+                    className="mt-0.5 text-uin-primary"
+                  />
+                  <div>
+                    <span className="block font-bold">Ganti Total SK (Terbaru)</span>
+                    <span className="text-[10px] font-normal text-slate-500 block leading-tight mt-0.5">
+                      Menghapus data lama agar tidak dobel. PIN santri yang sudah aktivasi tetap aman.
+                    </span>
+                  </div>
+                </label>
+
+                <label className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer transition-all ${importMode === 'merge' ? 'bg-emerald-50/80 border-emerald-500 text-emerald-950 font-bold shadow-sm' : 'bg-white border-slate-200 text-slate-600'}`}>
+                  <input
+                    type="radio"
+                    name="importMode"
+                    checked={importMode === 'merge'}
+                    onChange={() => setImportMode('merge')}
+                    className="mt-0.5 text-uin-primary"
+                  />
+                  <div>
+                    <span className="block font-bold">Gabungkan / Tambah Baru</span>
+                    <span className="text-[10px] font-normal text-slate-500 block leading-tight mt-0.5">
+                      Memperbarui data yang cocok dan menambahkan santri baru ke daftar SK yang ada.
+                    </span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                 <Sparkles className="w-4 h-4 text-amber-500" />
