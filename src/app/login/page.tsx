@@ -41,13 +41,13 @@ function LoginForm() {
   const [showPin, setShowPin] = useState(false);
 
   // Pengurus Login State
-  const [pgrUsername, setPgrUsername] = useState('pengurus.lt5');
-  const [pgrPassword, setPgrPassword] = useState('mahad2026');
+  const [pgrUsername, setPgrUsername] = useState('');
+  const [pgrPassword, setPgrPassword] = useState('');
   const [showPgrPassword, setShowPgrPassword] = useState(false);
 
   // Admin Login State
-  const [admEmail, setAdmEmail] = useState(DEFAULT_ADMIN.email);
-  const [admPassword, setAdmPassword] = useState(DEFAULT_ADMIN.password);
+  const [admEmail, setAdmEmail] = useState('');
+  const [admPassword, setAdmPassword] = useState('');
   const [showAdmPassword, setShowAdmPassword] = useState(false);
 
   // Common UI State
@@ -501,33 +501,31 @@ function LoginForm() {
             
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Pilih Akun Petugas Pengurus Lantai
+                Username / ID Petugas Pengurus
               </label>
-              <select
-                value={pgrUsername}
-                onChange={(e) => {
-                  setPgrUsername(e.target.value);
-                  setPgrPassword('mahad2026');
-                }}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-uin-primary/30 outline-none"
-              >
-                {DEFAULT_PENGURUS_LIST.map((p) => (
-                  <option key={p.id} value={p.username}>
-                    {p.nama} &bull; {p.username}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <User className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  required
+                  placeholder="Masukkan Username atau ID SK Pengurus"
+                  value={pgrUsername}
+                  onChange={(e) => setPgrUsername(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-uin-primary/30 outline-none"
+                />
+              </div>
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Password / PIN Pengurus
+                Password Petugas Pengurus
               </label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
                 <input
                   type={showPgrPassword ? 'text' : 'password'}
                   required
+                  placeholder="Masukkan Password Pengurus"
                   value={pgrPassword}
                   onChange={(e) => setPgrPassword(e.target.value)}
                   className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-uin-primary/30 outline-none"
@@ -540,7 +538,6 @@ function LoginForm() {
                   {showPgrPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              <p className="text-[11px] text-slate-400 mt-1">Default Demo: Password <code>mahad2026</code></p>
             </div>
 
             <button
@@ -568,6 +565,7 @@ function LoginForm() {
                 <input
                   type="email"
                   required
+                  placeholder="admin@mahad.uinssc.ac.id"
                   value={admEmail}
                   onChange={(e) => setAdmEmail(e.target.value)}
                   className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-uin-primary/30 outline-none"
@@ -584,6 +582,7 @@ function LoginForm() {
                 <input
                   type={showAdmPassword ? 'text' : 'password'}
                   required
+                  placeholder="Masukkan Password Superadmin"
                   value={admPassword}
                   onChange={(e) => setAdmPassword(e.target.value)}
                   className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-uin-primary/30 outline-none"
@@ -596,7 +595,6 @@ function LoginForm() {
                   {showAdmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              <p className="text-[11px] text-slate-400 mt-1">Default Demo: Password <code>adminmahad2026</code></p>
             </div>
 
             <button
@@ -604,7 +602,7 @@ function LoginForm() {
               disabled={loading}
               className="w-full flex items-center justify-center gap-2 py-3.5 bg-slate-900 hover:bg-black text-white font-bold text-sm rounded-xl shadow-md transition-all"
             >
-              <ShieldCheck className="w-4 h-4 text-amber-400" />
+              <ShieldCheck className="w-4 h-4" />
               <span>{loading ? 'Masuk...' : 'Masuk Dashboard Superadmin'}</span>
             </button>
 

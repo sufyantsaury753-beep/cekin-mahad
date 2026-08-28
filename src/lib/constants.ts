@@ -546,7 +546,7 @@ export const ATURAN_BARANG = [
 export const DEFAULT_ADMIN = {
   email: 'admin@mahad.uinssc.ac.id',
   nama: 'Superadmin UPT Ma\'had',
-  password: 'adminmahad2026',
+  password: 'mahaduinssc@digital',
   role: 'ADMIN' as const,
 };
 
@@ -767,15 +767,66 @@ export function getShortJurusan(jurusan?: string, fakultas?: string): string {
 
   if (clean.includes('EKONOMI SYARIAH') || clean === 'ESY') return 'ESY';
   if (clean.includes('PERBANKAN SYARIAH') || clean === 'PBS') return 'PBS';
-  if (clean.includes('AKUNTANSI SYARIAH') || clean === 'AKSYAR') return 'AKSYAR';
-  if (clean.includes('ZAKAT') || clean.includes('WAKAF') || clean === 'MAZAWA') return 'MAZAWA';
-  if (clean.includes('PARIWISATA') || clean === 'PARSYAR') return 'PARSYAR';
-
   if (clean.includes('INFORMATIKA') || clean === 'TI') return 'TI';
   if (clean.includes('SISTEM INFORMASI') || clean === 'SI') return 'SI';
   if (clean.includes('BIOTEKNOLOGI')) return 'BIOTEK';
 
   return clean;
+}
+
+// Dictionary: Mapping Standard Acronym to Official Full Major Name
+export const JURUSAN_FULL_NAMES: Record<string, string> = {
+  'PAI': 'Pendidikan Agama Islam',
+  'PBA': 'Pendidikan Bahasa Arab',
+  'MPI': 'Manajemen Pendidikan Islam',
+  'PGMI': 'Pendidikan Guru Madrasah Ibtidaiyah',
+  'PIAUD': 'Pendidikan Islam Anak Usia Dini',
+  'TBI': 'Tadris Bahasa Inggris',
+  'TMATH': 'Tadris Matematika',
+  'TBIO': 'Tadris IPA Biologi',
+  'TBIND': 'Tadris Bahasa Indonesia',
+  'TIPS': 'Tadris Ilmu Pengetahuan Sosial (IPS)',
+  'TKIM': 'Tadris Kimia',
+  'TFIS': 'Tadris Fisika',
+
+  'HKI': 'Hukum Keluarga Islam (Ahwal Syakhsiyyah)',
+  'HES': 'Hukum Ekonomi Syariah (Muamalah)',
+  'HTN': 'Hukum Tata Negara (Siyasah)',
+  'IF': 'Ilmu Falak',
+
+  'IAT': 'Ilmu Al-Qur\'an dan Tafsir',
+  'ILHA': 'Ilmu Hadis',
+  'AFI': 'Akidah dan Filsafat Islam',
+  'SPI': 'Sejarah Peradaban Islam',
+  'BSA': 'Bahasa dan Sastra Arab',
+  'TAPSI': 'Tasawuf dan Psikoterapi',
+  'SAA': 'Studi Agama-Agama',
+
+  'KPI': 'Komunikasi dan Penyiaran Islam',
+  'BKI': 'Bimbingan dan Konseling Islam',
+  'PMI': 'Pengembangan Masyarakat Islam',
+  'MD': 'Manajemen Dakwah',
+  'SA': 'Sosiologi Agama',
+
+  'ESY': 'Ekonomi Syariah',
+  'PBS': 'Perbankan Syariah',
+  'AKSYAR': 'Akuntansi Syariah',
+  'MAZAWA': 'Manajemen Zakat dan Wakaf',
+  'PARSYAR': 'Pariwisata Syariah',
+
+  'TI': 'Teknik Informatika',
+  'SI': 'Sistem Informasi',
+  'BIOTEK': 'Bioteknologi',
+};
+
+// Helper: Convert short or long Major name to Official Full Name (for Tooltips / Hover)
+export function getFullJurusanName(jurusan?: string, fakultas?: string): string {
+  if (!jurusan) return '-';
+  const short = getShortJurusan(jurusan, fakultas);
+  if (JURUSAN_FULL_NAMES[short]) {
+    return JURUSAN_FULL_NAMES[short];
+  }
+  return jurusan.trim();
 }
 
 
