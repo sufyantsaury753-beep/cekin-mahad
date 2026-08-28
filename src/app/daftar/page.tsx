@@ -123,6 +123,7 @@ function DaftarPageContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    MahadStore.initSupabaseSync();
     setRooms(MahadStore.getRooms());
     const handleRoomUpdate = () => setRooms(MahadStore.getRooms());
     window.addEventListener('mahad_rooms_updated', handleRoomUpdate);

@@ -8,6 +8,7 @@ import {
   UserRole,
   Gender,
   JenisPendaftaran,
+  GedungType,
 } from './types';
 import {
   generateInitialRooms,
@@ -17,6 +18,7 @@ import {
   DEFAULT_PENGURUS_LIST,
   DEFAULT_SK_PENGURUS_LIST,
 } from './constants';
+import { supabase, isSupabaseConfigured } from './supabase';
 
 const ROOMS_KEY = 'mahad_rooms_v3';
 const MHS_KEY = 'mahad_mhs_v3';
@@ -46,6 +48,155 @@ function buildInitialRooms(): Kamar[] {
 }
 
 export const MahadStore = {
+  // --- Supabase Realtime Sync Initialization ---
+  initSupabaseSync() {
+    if (typeof window === 'undefined' || !isSupabaseConfigured()) return;
+
+    // 1. Sync Rooms from Supabase
+    supabase.from('kamar').select('*').then(({ data, error }) => {
+      if (!error && data && data.length > 0) {
+        const mapped: Kamar[] = data.map((r: any) => ({
+          id: r.id,
+          nomor: r.nomor,
+          lantai: r.lantai,
+          jajaran: r.jajaran,
+          gedung: r.gedung,
+          gender: r.gender,
+          kategori: r.kategori,
+          isLocked: r.is_locked,
+          lockReason: r.lock_reason,
+          kapasitas: r.kapasitas,
+          beds: r.beds,
+        }));
+        this.saveRoomsLocally(mapped);
+      } else if (!error && data && data.length === 0) {
+        // Seed initial rooms to Supabase
+        const init = buildInitialRooms();
+        const rows = init.map((r) => ({
+          id: r.id,
+          nomor: r.nomor,
+          lantai: r.lantai,
+          jajaran: r.jajaran,
+          gedung: r.gedung,
+          gender: r.gender,
+          kategori: r.kategori,
+          is_locked: r.isLocked,
+          lock_reason: r.lockReason || null,
+          kapasitas: r.kapasitas,
+          beds: r.beds,
+        }));
+        supabase.from('kamar').upsert(rows).then(() => {});
+      }
+    });
+
+    // 2. Sync Mahasantri from Supabase
+    supabase.from('mahasantri').select('*').then(({ data, error }) => {
+      if (!error && data && data.length > 0) {
+        const mapped: Mahasantri[] = data.map((m: any) => ({
+          id: m.id,
+          nimNisn: m.nim_nisn,
+          nama: m.nama,
+          jenisKelamin: m.jenis_kelamin as Gender,
+          jenisPendaftaran: m.jenis_pendaftaran as JenisPendaftaran,
+          fakultas: m.fakultas,
+          jurusan: m.jurusan,
+          isInternasional: m.is_internasional || false,
+          kamarId: m.kamar_id,
+          gedung: m.gedung as GedungType,
+          lantai: m.lantai,
+          nomorKamar: m.nomor_kamar,
+          jajaran: (m.jajaran || 'PUTRA') as any,
+          bedNumber: m.bed_number,
+          noWa: m.no_wa,
+          namaWali: m.nama_ortu || '-',
+          noWaWali: m.no_wa_ortu || '-',
+          pasFotoUrl: m.foto_url,
+          statusCheckIn: (m.status as any) || 'BELUM_CHECKIN',
+          qrToken: m.token_tiket,
+          qrCodeToken: m.token_tiket,
+          skNomor: m.sk_nomor || 'SK-01/2026',
+          createdAt: m.waktu_daftar || new Date().toISOString(),
+          checkInTimestamp: m.waktu_checkin || undefined,
+        }));
+        this.saveMahasantriLocally(mapped);
+      }
+    });
+
+    // 3. Realtime Subscription (Anti-Bentrok Kasur)
+    try {
+      supabase
+        .channel('mahad_channel_all')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'kamar' }, (payload) => {
+          if (payload.new && (payload.new as any).id) {
+            const r = payload.new as any;
+            const currentRooms = this.getRooms();
+            const idx = currentRooms.findIndex((x) => x.id === r.id);
+            const updatedRoom: Kamar = {
+              id: r.id,
+              nomor: r.nomor,
+              lantai: r.lantai,
+              jajaran: r.jajaran,
+              gedung: r.gedung,
+              gender: r.gender,
+              kategori: r.kategori,
+              isLocked: r.is_locked,
+              lockReason: r.lock_reason,
+              kapasitas: r.kapasitas,
+              beds: r.beds,
+            };
+            if (idx >= 0) {
+              currentRooms[idx] = updatedRoom;
+            } else {
+              currentRooms.push(updatedRoom);
+            }
+            this.saveRoomsLocally(currentRooms);
+          }
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'mahasantri' }, (payload) => {
+          if (payload.new && (payload.new as any).id) {
+            const m = payload.new as any;
+            const currentMhs = this.getMahasantriList();
+            const idx = currentMhs.findIndex((x) => x.id === m.id);
+            const updatedMhs: Mahasantri = {
+              id: m.id,
+              nimNisn: m.nim_nisn,
+              nama: m.nama,
+              jenisKelamin: m.jenis_kelamin as Gender,
+              jenisPendaftaran: m.jenis_pendaftaran as JenisPendaftaran,
+              fakultas: m.fakultas,
+              jurusan: m.jurusan,
+              isInternasional: m.is_internasional || false,
+              kamarId: m.kamar_id,
+              gedung: m.gedung as GedungType,
+              lantai: m.lantai,
+              nomorKamar: m.nomor_kamar,
+              jajaran: (m.jajaran || 'PUTRA') as any,
+              bedNumber: m.bed_number,
+              noWa: m.no_wa,
+              namaWali: m.nama_ortu || '-',
+              noWaWali: m.no_wa_ortu || '-',
+              pasFotoUrl: m.foto_url,
+              statusCheckIn: (m.status as any) || 'BELUM_CHECKIN',
+              qrToken: m.token_tiket,
+              qrCodeToken: m.token_tiket,
+              skNomor: m.sk_nomor || 'SK-01/2026',
+              createdAt: m.waktu_daftar || new Date().toISOString(),
+              checkInTimestamp: m.waktu_checkin || undefined,
+            };
+            if (idx >= 0) {
+              currentMhs[idx] = updatedMhs;
+            } else {
+              currentMhs.unshift(updatedMhs);
+            }
+            this.saveMahasantriLocally(currentMhs);
+          }
+        })
+        .subscribe();
+    } catch (e) {
+      console.warn('Realtime subscription error:', e);
+    }
+  },
+
   // --- SK Rektor Whitelist ---
   getSKList(): SKMahasantri[] {
     if (typeof window === 'undefined') return INITIAL_SK_LIST;
@@ -63,7 +214,7 @@ export const MahadStore = {
     }
   },
 
-  saveSKList(list: SKMahasantri[]) {
+  saveSKListLocally(list: SKMahasantri[]) {
     if (typeof window === 'undefined') return;
     try {
       localStorage.setItem(SK_KEY, JSON.stringify(list));
@@ -71,6 +222,27 @@ export const MahadStore = {
       console.warn('saveSKList storage error:', e);
     }
     window.dispatchEvent(new CustomEvent('mahad_sk_updated', { detail: list }));
+  },
+
+  saveSKList(list: SKMahasantri[]) {
+    this.saveSKListLocally(list);
+    if (isSupabaseConfigured()) {
+      const rows = list.map((item) => ({
+        nim_nisn: item.nimNisn,
+        no: item.no,
+        nama: item.nama,
+        jenis_kelamin: item.jenisKelamin,
+        jenis_pendaftaran: item.jenisPendaftaran,
+        fakultas: item.fakultas,
+        jurusan: item.jurusan,
+        is_internasional: item.isInternasional || false,
+        asal_negara: item.asalNegara || null,
+        sk_nomor: item.skNomor || null,
+        pin: item.pin || null,
+        no_wa: item.noWaRegistered || null,
+      }));
+      supabase.from('sk_mahasantri').upsert(rows).then(() => {});
+    }
   },
 
   addSKMahasantri(mhs: SKMahasantri) {
@@ -233,7 +405,7 @@ export const MahadStore = {
     }
   },
 
-  saveRooms(rooms: Kamar[]) {
+  saveRoomsLocally(rooms: Kamar[]) {
     if (typeof window === 'undefined') return;
     try {
       localStorage.setItem(ROOMS_KEY, JSON.stringify(rooms));
@@ -241,6 +413,27 @@ export const MahadStore = {
       console.warn('localStorage saveRooms error:', e);
     }
     window.dispatchEvent(new CustomEvent('mahad_rooms_updated', { detail: rooms }));
+  },
+
+  saveRooms(rooms: Kamar[]) {
+    this.saveRoomsLocally(rooms);
+    if (isSupabaseConfigured()) {
+      const rows = rooms.map((r) => ({
+        id: r.id,
+        nomor: r.nomor,
+        lantai: r.lantai,
+        jajaran: r.jajaran,
+        gedung: r.gedung,
+        gender: r.gender,
+        kategori: r.kategori,
+        is_locked: r.isLocked,
+        lock_reason: r.lockReason || null,
+        kapasitas: r.kapasitas,
+        beds: r.beds,
+        updated_at: new Date().toISOString(),
+      }));
+      supabase.from('kamar').upsert(rows).then(() => {});
+    }
   },
 
   // Admin Feature: Toggle Lock Room (e.g. Kamar Mudabbir, Kamar Tamu, Perbaikan)
@@ -315,7 +508,7 @@ export const MahadStore = {
     }
   },
 
-  saveMahasantriList(list: Mahasantri[]) {
+  saveMahasantriLocally(list: Mahasantri[]) {
     if (typeof window === 'undefined') return;
     try {
       localStorage.setItem(MHS_KEY, JSON.stringify(list));
@@ -323,6 +516,35 @@ export const MahadStore = {
       console.warn('localStorage saveMahasantriList error:', e);
     }
     window.dispatchEvent(new CustomEvent('mahad_mhs_updated', { detail: list }));
+  },
+
+  saveMahasantriList(list: Mahasantri[]) {
+    this.saveMahasantriLocally(list);
+    if (isSupabaseConfigured()) {
+      const rows = list.map((m) => ({
+        id: m.id,
+        nim_nisn: m.nimNisn,
+        nama: m.nama,
+        jenis_kelamin: m.jenisKelamin,
+        jenis_pendaftaran: m.jenisPendaftaran,
+        fakultas: m.fakultas,
+        jurusan: m.jurusan,
+        kamar_id: m.kamarId,
+        gedung: m.gedung,
+        lantai: m.lantai,
+        nomor_kamar: m.nomorKamar,
+        bed_number: m.bedNumber,
+        no_wa: m.noWa,
+        nama_ortu: m.namaWali || null,
+        no_wa_ortu: m.noWaWali || null,
+        foto_url: m.pasFotoUrl || null,
+        status: m.statusCheckIn || 'BELUM_CHECKIN',
+        token_tiket: m.qrCodeToken || m.qrToken || `TIKET-${m.nimNisn}`,
+        waktu_daftar: m.createdAt || new Date().toISOString(),
+        waktu_checkin: m.checkInTimestamp || null,
+      }));
+      supabase.from('mahasantri').upsert(rows).then(() => {});
+    }
   },
 
   getMahasantriByNimNisn(nimNisn: string): Mahasantri | undefined {

@@ -118,6 +118,7 @@ function AdminDashboardContent() {
   };
 
   useEffect(() => {
+    MahadStore.initSupabaseSync();
     loadData();
 
     const handleRoomUpdate = () => loadData();
