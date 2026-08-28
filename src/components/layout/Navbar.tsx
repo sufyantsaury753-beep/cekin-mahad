@@ -100,10 +100,12 @@ export default function Navbar() {
           
           {/* Logo & Identity */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-uin-accent to-emerald-400 p-0.5 shadow-md flex items-center justify-center">
-              <div className="w-full h-full bg-uin-dark rounded-[10px] flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-uin-accent group-hover:scale-110 transition-transform" />
-              </div>
+            <div className="w-12 h-12 rounded-full overflow-hidden bg-white p-0.5 shadow-md flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform border border-emerald-400/40">
+              <img
+                src="/logo-mahad.png"
+                alt="Logo Ma'had UINSSC"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <div className="flex items-center gap-2">

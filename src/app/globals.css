@@ -13,14 +13,35 @@ body {
   min-height: 100vh;
 }
 
+@page {
+  size: A4 portrait;
+  margin: 6mm 8mm;
+}
+
 @media print {
-  body {
+  html, body {
     background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   .no-print {
     display: none !important;
   }
   .print-only {
     display: block !important;
+  }
+  header, nav, footer {
+    display: none !important;
+  }
+  .page-break-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
   }
 }

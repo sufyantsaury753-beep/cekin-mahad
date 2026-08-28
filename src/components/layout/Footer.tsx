@@ -8,8 +8,10 @@ export default function Footer() {
           
           {/* Col 1: Instansi */}
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-white font-serif font-bold text-lg">
-              <Building2 className="w-5 h-5 text-uin-accent" />
+            <div className="flex items-center gap-2.5 text-white font-serif font-bold text-lg">
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-white p-0.5 shrink-0 flex items-center justify-center">
+                <img src="/logo-mahad.png" alt="Logo Ma'had" className="w-full h-full object-contain" />
+              </div>
               <span>UPT MA&apos;HAD AL-JAMI&apos;AH</span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed">
