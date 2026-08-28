@@ -887,6 +887,57 @@ export const MahadStore = {
     window.dispatchEvent(new CustomEvent('mahad_logs_updated', { detail: logs }));
   },
 
+  // Cancel check-in for a single mahasantri (Back to REGISTERED, ready for re-scan)
+  cancelCheckIn(nimNisn: string): { success: boolean; error?: string } {
+    const clean = nimNisn.trim().toLowerCase();
+    const mhsList = this.getMahasantriList();
+    const mhs = mhsList.find((m) => m.nimNisn.trim().toLowerCase() === clean);
+
+    if (!mhs) {
+      return { success: false, error: 'Mahasantri tidak ditemukan.' };
+    }
+
+    mhs.statusCheckIn = 'REGISTERED';
+    mhs.checkInTimestamp = undefined;
+    mhs.petugasCheckIn = undefined;
+    mhs.catatanBarangCheckIn = undefined;
+    this.saveMahasantriList(mhsList);
+
+    // Remove logs for this student
+    const logs = this.getLogs().filter((l) => l.mahasantriNimNisn?.toLowerCase() !== clean);
+    this.saveLogs(logs);
+
+    if (isSupabaseConfigured()) {
+      supabase.from('checkin_logs').delete().eq('mahasantri_nim_nisn', mhs.nimNisn).then(() => {});
+    }
+
+    return { success: true };
+  },
+
+  // Reset/Nol-kan ALL check-ins (Set all students back to REGISTERED for rehearsal/day-H testing)
+  resetAllCheckIns(): { success: boolean; count: number } {
+    const mhsList = this.getMahasantriList();
+    let count = 0;
+    mhsList.forEach((m) => {
+      if (m.statusCheckIn === 'CHECKED_IN') {
+        m.statusCheckIn = 'REGISTERED';
+        m.checkInTimestamp = undefined;
+        m.petugasCheckIn = undefined;
+        m.catatanBarangCheckIn = undefined;
+        count++;
+      }
+    });
+
+    this.saveMahasantriList(mhsList);
+    this.saveLogs([]);
+
+    if (isSupabaseConfigured()) {
+      supabase.from('checkin_logs').delete().neq('id', 'dummy_xyz').then(() => {});
+    }
+
+    return { success: true, count };
+  },
+
   // --- Reset All Data ---
   resetAllData() {
     if (typeof window === 'undefined') return;

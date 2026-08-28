@@ -278,6 +278,42 @@ function AdminDashboardContent() {
     }
   };
 
+  // Handle Batalkan Check-In Per Santri (Bisa di-scan ulang)
+  const handleCancelCheckIn = (nimNisn: string, nama: string) => {
+    if (
+      confirm(
+        `Batalkan status check-in untuk ${nama} (${nimNisn})?\n\nKamar dan ranjang tetap tersimpan, namun status kehadiran akan dikembalikan ke 'Belum Check-In' sehingga tiket dapat dipindai (di-scan) ulang oleh petugas.`
+      )
+    ) {
+      const res = MahadStore.cancelCheckIn(nimNisn);
+      if (res.success) {
+        setNotification(`Status check-in ${nama} (${nimNisn}) berhasil dibatalkan. Barcode tiket kini siap dipindai ulang.`);
+      } else {
+        alert(res.error || 'Gagal membatalkan check-in.');
+      }
+    }
+  };
+
+  // Handle Reset/Nol-kan SEMUA Check-In Sekaligus
+  const handleResetAllCheckIns = () => {
+    const checkedCount = mhsList.filter((m) => m.statusCheckIn === 'CHECKED_IN').length;
+    if (checkedCount === 0) {
+      alert('Belum ada mahasantri yang berstatus Checked-In saat ini.');
+      return;
+    }
+
+    if (
+      confirm(
+        `⚠️ PERINGATAN: Apakah Anda yakin ingin me-RESET / ME-NOL-KAN status check-in seluruh ${checkedCount} mahasantri?\n\nSemua nomor kamar & ranjang santri TETAP UTUH, namun status kehadiran akan di-nol-kan kembali ke 0 santri untuk simulasi atau hari-H.`
+      )
+    ) {
+      const res = MahadStore.resetAllCheckIns();
+      if (res.success) {
+        setNotification(`Berhasil me-reset status check-in ${res.count} mahasantri kembali ke 0. Seluruh tiket siap untuk check-in ulang.`);
+      }
+    }
+  };
+
   // Export Data to CSV
   const handleExportCSV = () => {
     const headers = [
@@ -517,6 +553,19 @@ function AdminDashboardContent() {
                 <option value="CHECKED_IN">Sudah Check-In H-H</option>
               </select>
 
+              {/* Reset/Nol-kan Check-In Button */}
+              {totalCheckedIn > 0 && (
+                <button
+                  type="button"
+                  onClick={handleResetAllCheckIns}
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-all shadow-xs"
+                  title="Nol-kan status check-in seluruh santri kembali ke 0"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Nol-kan Check-In ({totalCheckedIn})</span>
+                </button>
+              )}
+
             </div>
           </div>
 
@@ -600,14 +649,28 @@ function AdminDashboardContent() {
                         </td>
 
                         <td className="py-3.5 px-4 text-center">
-                          <a
-                            href={`/tiket/${encodeURIComponent(mhs.nimNisn)}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-block px-3 py-1.5 bg-slate-800 text-white rounded-lg text-[11px] font-semibold hover:bg-slate-900"
-                          >
-                            Buka E-Tiket
-                          </a>
+                          <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                            <a
+                              href={`/tiket/${encodeURIComponent(mhs.nimNisn)}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-block px-2.5 py-1.5 bg-slate-800 text-white rounded-lg text-[11px] font-semibold hover:bg-slate-900"
+                            >
+                              E-Tiket
+                            </a>
+
+                            {mhs.statusCheckIn === 'CHECKED_IN' && (
+                              <button
+                                type="button"
+                                onClick={() => handleCancelCheckIn(mhs.nimNisn, mhs.nama)}
+                                className="px-2.5 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-all"
+                                title="Batalkan status check-in santri ini agar bisa di-scan ulang"
+                              >
+                                <RotateCcw className="w-3 h-3" />
+                                <span>Batalkan</span>
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))
