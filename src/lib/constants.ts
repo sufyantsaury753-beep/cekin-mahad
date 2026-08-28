@@ -137,6 +137,17 @@ export function generateInitialRooms(): Kamar[] {
 export const INITIAL_SK_LIST: SKMahasantri[] = [
   // --- MAHASANTRI PUTRA (CALON MAHASANTRI BARU BERBASIS NISN & PERPANJANGAN BERBASIS NIM) ---
   {
+    no: 1,
+    nimNisn: '2530104044',
+    nama: 'Muhammad Indera Wiguna',
+    jenisKelamin: 'L',
+    jenisPendaftaran: 'Perpanjangan',
+    fakultas: 'FITK',
+    jurusan: 'TIPS',
+    isInternasional: false,
+    skNomor: SK_INFO.nomor,
+  },
+  {
     no: 4,
     nimNisn: '0067999651',
     nama: 'Abdullah Al Mu\'izi Mafas',
