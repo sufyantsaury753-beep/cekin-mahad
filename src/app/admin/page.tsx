@@ -1008,13 +1008,20 @@ function AdminDashboardContent() {
                       </button>
 
                       <div className="flex items-center gap-1 px-2">
-                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                          let pageNum = currentPage - 2 + i;
-                          if (pageNum < 1) pageNum = i + 1;
-                          if (pageNum > totalPages) pageNum = totalPages - 4 + i;
-                          if (pageNum < 1 || pageNum > totalPages) return null;
+                        {(() => {
+                          const maxVisible = 5;
+                          let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+                          let end = start + maxVisible - 1;
+                          if (end > totalPages) {
+                            end = totalPages;
+                            start = Math.max(1, end - maxVisible + 1);
+                          }
+                          const pageNumbers: number[] = [];
+                          for (let i = start; i <= end; i++) {
+                            pageNumbers.push(i);
+                          }
 
-                          return (
+                          return pageNumbers.map((pageNum) => (
                             <button
                               key={pageNum}
                               type="button"
@@ -1027,8 +1034,8 @@ function AdminDashboardContent() {
                             >
                               {pageNum}
                             </button>
-                          );
-                        })}
+                          ));
+                        })()}
                       </div>
 
                       <button
