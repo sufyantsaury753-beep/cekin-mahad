@@ -366,49 +366,86 @@ function AdminDashboardContent() {
       alert(res.error || 'Gagal memindahkan mahasantri.');
     }
   };
+  // Export Data to CSV (Langsung Rapi & Kompatibel Excel / Google Sheets)
   const handleExportCSV = () => {
     const headers = [
       'No',
-      'NIM/NISN',
-      'Nama Lengkap',
+      'NIM / NISN',
+      'Nama Lengkap Mahasantri',
       'Jenis Kelamin',
-      'Jenis Pendaftaran',
+      'Jalur Pendaftaran',
       'Fakultas',
-      'Jurusan',
-      'Gedung',
+      'Jurusan / Prodi',
+      'Gedung Asrama',
       'Lantai',
-      'Kamar',
+      'Nomor Kamar',
       'Nomor Bed',
-      'Status CheckIn',
-      'Waktu CheckIn',
-      'Petugas',
+      'Status Kehadiran',
+      'Waktu Check-In',
+      'Petugas Verifikasi',
+      'Catatan Barang Bawaan',
     ];
 
-    const rows = mhsList.map((m, idx) => [
-      idx + 1,
-      `'${m.nimNisn}`,
-      `"${m.nama}"`,
-      m.jenisKelamin,
-      `"${m.jenisPendaftaran}"`,
-      `"${m.fakultas}"`,
-      `"${m.jurusan}"`,
-      `"${m.gedung}"`,
-      m.lantai,
-      m.nomorKamar,
-      m.bedNumber,
-      m.statusCheckIn,
-      m.checkInTimestamp || '-',
-      `"${m.petugasCheckIn || '-'}"`,
-    ]);
+    const escapeCsv = (val: any) => {
+      if (val === null || val === undefined) return '""';
+      const str = String(val).replace(/"/g, '""');
+      return `"${str}"`;
+    };
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
+    const rows = mhsList.map((m, idx) => {
+      // Format Waktu Check-In ke Format Indonesia (WIB)
+      let formattedTime = '-';
+      if (m.checkInTimestamp) {
+        try {
+          const dt = new Date(m.checkInTimestamp);
+          formattedTime = dt
+            .toLocaleString('id-ID', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            })
+            .replace(/\./g, ':');
+        } catch {
+          formattedTime = m.checkInTimestamp;
+        }
+      }
+
+      const genderText = m.jenisKelamin === 'L' ? 'Laki-laki (Putra)' : 'Perempuan (Putri)';
+      const statusText = m.statusCheckIn === 'CHECKED_IN' ? 'Sudah Check-In (Hadir)' : 'Belum Check-In (Booking)';
+
+      return [
+        idx + 1,
+        `\t${m.nimNisn}`, // Tab prefix prevents Excel from truncating leading zeros without adding ugly quote marks
+        escapeCsv(m.nama),
+        escapeCsv(genderText),
+        escapeCsv(m.jenisPendaftaran),
+        escapeCsv(m.fakultas),
+        escapeCsv(m.jurusan),
+        escapeCsv(m.gedung),
+        m.lantai,
+        escapeCsv(m.nomorKamar),
+        m.bedNumber,
+        escapeCsv(statusText),
+        escapeCsv(formattedTime),
+        escapeCsv(m.petugasCheckIn || '-'),
+        escapeCsv(m.catatanBarangCheckIn || '-'),
+      ].join(',');
+    });
+
+    // \uFEFF (UTF-8 BOM) forces Microsoft Excel to open UTF-8 CSV directly in clean columns
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
+    link.href = url;
     link.setAttribute('download', `Rekap_CheckIn_Mahad_UINSSC_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
