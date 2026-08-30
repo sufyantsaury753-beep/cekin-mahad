@@ -469,6 +469,15 @@ function AdminDashboardContent() {
         </div>
 
         <div className="flex flex-wrap gap-2.5">
+          <a
+            href="/Template_Laporan_Pivot_Cekin_Mahad_UINSSC.xlsx"
+            download="Template_Laporan_Pivot_Cekin_Mahad_UINSSC.xlsx"
+            className="flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow transition-all"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>Unduh Template Excel 4 Sheet (.xlsx)</span>
+          </a>
+
           <button
             onClick={handleExportCSV}
             className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow transition-all"
