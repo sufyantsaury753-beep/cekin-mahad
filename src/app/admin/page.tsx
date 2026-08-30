@@ -40,6 +40,7 @@ import {
   UserMinus,
   ArrowRightLeft,
   LogOut,
+  Settings,
   X,
 } from 'lucide-react';
 
@@ -506,19 +507,10 @@ function AdminDashboardContent() {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2.5">
-          <a
-            href="/Template_Laporan_Pivot_Cekin_Mahad_UINSSC.xlsx"
-            download="Template_Laporan_Pivot_Cekin_Mahad_UINSSC.xlsx"
-            className="flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow transition-all"
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-            <span>Unduh Template Excel 4 Sheet (.xlsx)</span>
-          </a>
-
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
           >
             <Download className="w-4 h-4" />
             <span>Ekspor CSV</span>
@@ -533,10 +525,10 @@ function AdminDashboardContent() {
               setAdminConfirmPass('');
               setShowChangeAdminPassModal(true);
             }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-slate-900/90 hover:bg-slate-900 text-uin-accent rounded-xl text-xs font-bold shadow transition-all border border-slate-700"
+            className="flex items-center gap-2 px-4 py-2.5 bg-slate-900/90 hover:bg-slate-900 text-white hover:text-uin-accent rounded-xl text-xs font-bold shadow-sm transition-all border border-slate-700/80"
           >
-            <Key className="w-4 h-4" />
-            <span>Ganti Password Admin</span>
+            <Settings className="w-4 h-4 text-uin-accent" />
+            <span>Pengaturan</span>
           </button>
         </div>
       </div>
@@ -2005,19 +1997,19 @@ function AdminDashboardContent() {
       )}
 
       {/* ========================================================= */}
-      {/* MODAL 6: GANTI PASSWORD SUPERADMIN                        */}
+      {/* MODAL 6: PENGATURAN SISTEM & KEAMANAN                     */}
       {/* ========================================================= */}
       {showChangeAdminPassModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200 space-y-4">
+          <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-slate-200 space-y-5 max-h-[90vh] overflow-y-auto">
             <div className="flex items-start justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
                 <div className="p-2.5 bg-slate-900 text-uin-accent rounded-2xl">
-                  <Key className="w-5 h-5" />
+                  <Settings className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-base text-slate-800">Ganti Password Superadmin</h3>
-                  <p className="text-xs text-slate-500">Perbarui kata sandi untuk login Superadmin.</p>
+                  <h3 className="font-bold text-base text-slate-800">Pengaturan Sistem</h3>
+                  <p className="text-xs text-slate-500">Konfigurasi kata sandi Superadmin &amp; utilitas data Ma&apos;had.</p>
                 </div>
               </div>
               <button
@@ -2028,66 +2020,100 @@ function AdminDashboardContent() {
               </button>
             </div>
 
-            <form onSubmit={handleChangeAdminPassword} className="space-y-3.5">
-              {adminPassError && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2 text-rose-800 text-xs font-semibold">
-                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                  <span>{adminPassError}</span>
+            {/* SECTION 1: GANTI PASSWORD SUPERADMIN */}
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+                <Key className="w-4 h-4 text-uin-primary" />
+                <span>Ganti Password Superadmin</span>
+              </div>
+
+              <form onSubmit={handleChangeAdminPassword} className="space-y-3 pt-1">
+                {adminPassError && (
+                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2 text-rose-800 text-xs font-semibold">
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span>{adminPassError}</span>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">Password Lama:</label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Masukkan password lama saat ini"
+                    value={adminOldPass}
+                    onChange={(e) => setAdminOldPass(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-uin-primary/20 font-mono"
+                  />
                 </div>
-              )}
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Password Lama:</label>
-                <input
-                  type="password"
-                  required
-                  placeholder="Masukkan password lama saat ini"
-                  value={adminOldPass}
-                  onChange={(e) => setAdminOldPass(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-uin-primary/20 font-mono"
-                />
-              </div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Password Baru:</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="Min. 6 karakter"
+                      value={adminNewPass}
+                      onChange={(e) => setAdminNewPass(e.target.value)}
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-uin-primary/20 font-mono"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Password Baru:</label>
-                <input
-                  type="password"
-                  required
-                  placeholder="Minimal 6 karakter"
-                  value={adminNewPass}
-                  onChange={(e) => setAdminNewPass(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-uin-primary/20 font-mono"
-                />
-              </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Ulangi Password:</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="Konfirmasi password"
+                      value={adminConfirmPass}
+                      onChange={(e) => setAdminConfirmPass(e.target.value)}
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-uin-primary/20 font-mono"
+                    />
+                  </div>
+                </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Konfirmasi Password Baru:</label>
-                <input
-                  type="password"
-                  required
-                  placeholder="Ulangi password baru"
-                  value={adminConfirmPass}
-                  onChange={(e) => setAdminConfirmPass(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-uin-primary/20 font-mono"
-                />
-              </div>
-
-              <div className="flex gap-2.5 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowChangeAdminPassModal(false)}
-                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all"
-                >
-                  Batal
-                </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 bg-uin-primary hover:bg-uin-secondary text-white font-bold text-xs rounded-xl shadow transition-all"
+                  className="w-full py-2.5 bg-uin-primary hover:bg-uin-secondary text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5"
                 >
-                  Simpan Password Baru
+                  <Key className="w-3.5 h-3.5" />
+                  <span>Simpan Password Baru</span>
                 </button>
+              </form>
+            </div>
+
+            {/* SECTION 2: UTILITAS LAPORAN & DOKUMEN */}
+            <div className="bg-emerald-50/40 p-4 rounded-2xl border border-emerald-200 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-bold text-emerald-950">
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-700" />
+                  <span>Template Laporan Excel 4-Sheet</span>
+                </div>
               </div>
-            </form>
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                File Excel (.xlsx) dengan 4 sheet laporan dinamis (Data Master, Rekap Lantai, Buku Induk Kamar, &amp; Demografi Fakultas).
+              </p>
+              <a
+                href="/Template_Laporan_Pivot_Cekin_Mahad_UINSSC.xlsx"
+                download="Template_Laporan_Pivot_Cekin_Mahad_UINSSC.xlsx"
+                className="inline-flex items-center justify-center gap-2 w-full py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-xs transition-all"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Unduh Template Laporan (.xlsx)</span>
+              </a>
+            </div>
+
+            {/* CLOSE BUTTON */}
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={() => setShowChangeAdminPassModal(false)}
+                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all"
+              >
+                Tutup Pengaturan
+              </button>
+            </div>
           </div>
         </div>
       )}
