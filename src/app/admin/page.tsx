@@ -435,8 +435,8 @@ function AdminDashboardContent() {
       ].join(',');
     });
 
-    // \uFEFF (UTF-8 BOM) forces Microsoft Excel to open UTF-8 CSV directly in clean columns
-    const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+    // \uFEFF (UTF-8 BOM) + sep=, forces Windows Microsoft Excel to open CSV directly into clean columns
+    const csvContent = '\uFEFFsep=,\r\n' + [headers.join(','), ...rows].join('\r\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
