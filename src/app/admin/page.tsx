@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { MahadStore } from '@/lib/store';
+import { MahadStore, MahadAuth } from '@/lib/store';
 import {
   Kamar,
   Mahasantri,
@@ -115,6 +115,13 @@ function AdminDashboardContent() {
   const [selectedMhsForMove, setSelectedMhsForMove] = useState<Mahasantri | null>(null);
   const [moveTargetKamarId, setMoveTargetKamarId] = useState('');
   const [moveTargetBed, setMoveTargetBed] = useState<number>(1);
+
+  // Change Admin Password State
+  const [showChangeAdminPassModal, setShowChangeAdminPassModal] = useState(false);
+  const [adminOldPass, setAdminOldPass] = useState('');
+  const [adminNewPass, setAdminNewPass] = useState('');
+  const [adminConfirmPass, setAdminConfirmPass] = useState('');
+  const [adminPassError, setAdminPassError] = useState<string | null>(null);
 
   const [notification, setNotification] = useState<string | null>(null);
 
@@ -366,6 +373,37 @@ function AdminDashboardContent() {
       alert(res.error || 'Gagal memindahkan mahasantri.');
     }
   };
+
+  // Handle Ganti Password Superadmin
+  const handleChangeAdminPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    setAdminPassError(null);
+
+    if (!adminOldPass) {
+      setAdminPassError('Masukkan password lama.');
+      return;
+    }
+    if (adminNewPass.length < 6) {
+      setAdminPassError('Password baru minimal 6 karakter.');
+      return;
+    }
+    if (adminNewPass !== adminConfirmPass) {
+      setAdminPassError('Konfirmasi password baru tidak cocok.');
+      return;
+    }
+
+    const res = MahadAuth.changeAdminPassword(adminOldPass, adminNewPass);
+    if (res.success) {
+      setNotification('Password Superadmin berhasil diperbarui! Simpan password baru Anda dengan aman.');
+      setShowChangeAdminPassModal(false);
+      setAdminOldPass('');
+      setAdminNewPass('');
+      setAdminConfirmPass('');
+    } else {
+      setAdminPassError(res.error || 'Gagal mengubah password Superadmin.');
+    }
+  };
+
   // Export Data to CSV (Langsung Rapi & Kompatibel Excel / Google Sheets)
   const handleExportCSV = () => {
     const headers = [
@@ -484,6 +522,21 @@ function AdminDashboardContent() {
           >
             <Download className="w-4 h-4" />
             <span>Ekspor CSV</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setAdminPassError(null);
+              setAdminOldPass('');
+              setAdminNewPass('');
+              setAdminConfirmPass('');
+              setShowChangeAdminPassModal(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-slate-900/90 hover:bg-slate-900 text-uin-accent rounded-xl text-xs font-bold shadow transition-all border border-slate-700"
+          >
+            <Key className="w-4 h-4" />
+            <span>Ganti Password Admin</span>
           </button>
         </div>
       </div>
@@ -1947,6 +2000,94 @@ function AdminDashboardContent() {
                 Tutup
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MODAL 6: GANTI PASSWORD SUPERADMIN                        */}
+      {/* ========================================================= */}
+      {showChangeAdminPassModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-start justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2.5 bg-slate-900 text-uin-accent rounded-2xl">
+                  <Key className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-slate-800">Ganti Password Superadmin</h3>
+                  <p className="text-xs text-slate-500">Perbarui kata sandi untuk login Superadmin.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowChangeAdminPassModal(false)}
+                className="text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleChangeAdminPassword} className="space-y-3.5">
+              {adminPassError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2 text-rose-800 text-xs font-semibold">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>{adminPassError}</span>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Password Lama:</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Masukkan password lama saat ini"
+                  value={adminOldPass}
+                  onChange={(e) => setAdminOldPass(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-uin-primary/20 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Password Baru:</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Minimal 6 karakter"
+                  value={adminNewPass}
+                  onChange={(e) => setAdminNewPass(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-uin-primary/20 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Konfirmasi Password Baru:</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Ulangi password baru"
+                  value={adminConfirmPass}
+                  onChange={(e) => setAdminConfirmPass(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-uin-primary/20 font-mono"
+                />
+              </div>
+
+              <div className="flex gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowChangeAdminPassModal(false)}
+                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 bg-uin-primary hover:bg-uin-secondary text-white font-bold text-xs rounded-xl shadow transition-all"
+                >
+                  Simpan Password Baru
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

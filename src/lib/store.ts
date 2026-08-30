@@ -26,6 +26,7 @@ const LOGS_KEY = 'mahad_logs_v3';
 const SK_KEY = 'mahad_sk_v3';
 const SK_PENGURUS_KEY = 'mahad_sk_pengurus_v3';
 const SESSION_KEY = 'mahad_session_v3';
+const ADMIN_PASS_KEY = 'mahad_admin_pass_v3';
 
 // Populate initial rooms with pre-existing mahasantri bookings
 function buildInitialRooms(): Kamar[] {
@@ -1090,9 +1091,31 @@ export const MahadAuth = {
     window.dispatchEvent(new CustomEvent('mahad_auth_changed', { detail: null }));
   },
 
+  // Get Current Admin Password (Dynamic with Local Storage / Default fallback)
+  getAdminPassword(): string {
+    if (typeof window === 'undefined') return DEFAULT_ADMIN.password;
+    return localStorage.getItem(ADMIN_PASS_KEY) || DEFAULT_ADMIN.password;
+  },
+
+  // Change Superadmin Password
+  changeAdminPassword(oldPass: string, newPass: string): { success: boolean; error?: string } {
+    const currentPass = this.getAdminPassword();
+    if (oldPass.trim() !== currentPass.trim()) {
+      return { success: false, error: 'Password lama Superadmin tidak sesuai.' };
+    }
+    if (newPass.trim().length < 6) {
+      return { success: false, error: 'Password baru minimal harus 6 karakter.' };
+    }
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(ADMIN_PASS_KEY, newPass.trim());
+    }
+    return { success: true };
+  },
+
   // Login Superadmin
   loginAdmin(password: string): { success: boolean; session?: UserSession; error?: string } {
-    if (password.trim() === DEFAULT_ADMIN.password) {
+    const validPass = this.getAdminPassword();
+    if (password.trim() === validPass.trim()) {
       const session: UserSession = {
         role: 'ADMIN',
         name: DEFAULT_ADMIN.nama,
