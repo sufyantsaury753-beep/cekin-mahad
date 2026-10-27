@@ -1,10 +1,18 @@
 import type { Metadata } from 'next';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-sans',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
-  title: "E-Checkin & Pemilihan Kamar Digital | UPT Ma'had Al-Jami'ah UIN Siber Syekh Nurjati Cirebon",
+  title: "Portal Manajemen & E-Checkin Ma'had Al-Jami'ah | UIN Siber Syekh Nurjati Cirebon",
   description: "Sistem Pemilihan Kamar Online, E-Tiket Barcode, dan E-Checkin Terdistribusi Ma'had Al-Jami'ah UIN Siber Syekh Nurjati Cirebon",
 };
 
@@ -14,8 +22,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id">
-      <body className="flex flex-col min-h-screen">
+    <html lang="id" className={plusJakartaSans.variable}>
+      <body className="flex flex-col min-h-screen font-sans bg-slate-50 text-slate-800 antialiased selection:bg-emerald-100 selection:text-emerald-900">
         <Navbar />
         <main className="flex-1">
           {children}

@@ -18,9 +18,9 @@ import {
   AlertCircle,
   ArrowRight,
   Phone,
-  Sparkles,
   QrCode,
   Users,
+  Info,
 } from 'lucide-react';
 
 function LoginForm() {
@@ -40,13 +40,13 @@ function LoginForm() {
   const [mhsNoWa, setMhsNoWa] = useState('');
   const [showPin, setShowPin] = useState(false);
 
-  // Pengurus Login State (Dropdown with ALL Pengurus, Password always BLANK)
+  // Pengurus Login State
   const [pengurusList, setPengurusList] = useState<Array<{ id: string; username: string; nama: string; gedung: string; lantai: number; jabatan?: string }>>([]);
   const [pgrUsername, setPgrUsername] = useState('');
   const [pgrPassword, setPgrPassword] = useState('');
   const [showPgrPassword, setShowPgrPassword] = useState(false);
 
-  // Admin Login State (Strictly BLANK, Anti-Autofill)
+  // Admin Login State
   const [admEmail, setAdmEmail] = useState('');
   const [admPassword, setAdmPassword] = useState('');
   const [showAdmPassword, setShowAdmPassword] = useState(false);
@@ -64,7 +64,6 @@ function LoginForm() {
       const dynamic = MahadStore.getSKPengurusList();
       const combined: Array<{ id: string; username: string; nama: string; gedung: string; lantai: number; jabatan?: string }> = [];
 
-      // Add all active pengurus from store & Supabase
       dynamic.forEach((p) => {
         combined.push({
           id: p.id,
@@ -87,49 +86,40 @@ function LoginForm() {
     return () => window.removeEventListener('mahad_sk_pengurus_updated', loadPengurus);
   }, []);
 
-  // Check if already logged in
-  useEffect(() => {
-    const session = MahadAuth.getSession();
-    if (session) {
-      if (redirectParam) {
-        router.push(redirectParam);
-      }
-    }
-  }, [router, redirectParam]);
-
-  // Handle Step 1: Mahasantri checks NISN
-  const handleCheckMahasantri = async (e: React.FormEvent) => {
+  // Handle Step 1: Check Mahasantri NISN / NIM in SK
+  const handleCheckMahasantri = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!mhsNimNisn.trim()) {
-      setError('Masukkan NIM atau NISN Anda terlebih dahulu.');
+    setSuccessMsg(null);
+
+    const cleanInput = mhsNimNisn.trim();
+    if (!cleanInput) {
+      setError('Masukkan NIM atau NISN Anda.');
       return;
     }
 
     setLoading(true);
-    const check = await MahadAuth.checkMahasantriLogin(mhsNimNisn.trim());
+    const mhsSK = MahadStore.getSKByNimNisn(cleanInput);
     setLoading(false);
 
-    if (!check.found || !check.skData) {
-      setError(check.error || 'NIM / NISN tidak terdaftar di SK.');
+    if (!mhsSK) {
+      setError(
+        `Nomor identitas "${cleanInput}" tidak ditemukan pada SK Penetapan Mahasantri. Pastikan nomor yang dimasukkan sesuai dengan lampiran SK resmi.`
+      );
       return;
     }
 
-    setMhsVerifiedSK(check.skData);
+    setMhsVerifiedSK(mhsSK);
+    setMhsPin('');
 
-    if (check.isPinSet) {
-      // Already has PIN -> Enter PIN
+    if (mhsSK.pin) {
       setMhsStep('ENTER_PIN');
     } else {
-      // First time -> Create PIN
       setMhsStep('CREATE_PIN');
-      if (check.skData.noWaRegistered) {
-        setMhsNoWa(check.skData.noWaRegistered);
-      }
     }
   };
 
-  // Handle Step 2A: Mahasantri sets up new PIN
+  // Handle Step 2A: Mahasantri create new PIN (First time)
   const handleActivateMahasantriPin = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -196,12 +186,12 @@ function LoginForm() {
     setLoading(false);
 
     if (res.success && res.session) {
-      setSuccessMsg(`Berhasil login sebagai ${res.session.name}!`);
+      setSuccessMsg(`Berhasil login sebagai ${res.session.name}.`);
       setTimeout(() => {
         router.push(redirectParam || '/scanner');
       }, 1000);
     } else {
-      setError(res.error || 'Login pengurus gagal.');
+      setError(res.error || 'Login pengurus gagal. Periksa kata sandi.');
     }
   };
 
@@ -215,46 +205,46 @@ function LoginForm() {
     setLoading(false);
 
     if (res.success && res.session) {
-      setSuccessMsg('Berhasil login sebagai Superadmin Ma\'had!');
+      setSuccessMsg('Berhasil login sebagai Superadmin Ma\'had.');
       setTimeout(() => {
         router.push(redirectParam || '/admin');
       }, 1000);
     } else {
-      setError(res.error || 'Login admin gagal.');
+      setError(res.error || 'Password Superadmin salah.');
     }
   };
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-12 space-y-8">
+    <div className="max-w-md mx-auto px-4 py-8 sm:py-12 space-y-6">
       
       {/* Header Title */}
       <div className="text-center space-y-2">
-        <div className="w-14 h-14 bg-uin-primary/10 rounded-2xl flex items-center justify-center text-uin-primary mx-auto shadow-sm">
-          <KeyRound className="w-7 h-7" />
+        <div className="w-10 h-10 bg-emerald-50 text-uin-primary border border-emerald-100 rounded-lg flex items-center justify-center mx-auto shadow-xs">
+          <KeyRound className="w-5 h-5" />
         </div>
-        <h1 className="text-2xl sm:text-3xl font-serif font-bold text-slate-800">
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
           Portal Masuk Sistem Ma&apos;had
         </h1>
-        <p className="text-xs text-slate-500 max-w-md mx-auto">
+        <p className="text-xs text-slate-500 max-w-sm mx-auto">
           Pilih jenis akun Anda untuk mengakses sistem check-in &amp; manajemen asrama UIN Siber Syekh Nurjati Cirebon.
         </p>
       </div>
 
       {/* Role Selection Tabs */}
-      <div className="grid grid-cols-3 p-1.5 bg-slate-100 rounded-2xl border border-slate-200 gap-1 text-xs font-bold">
+      <div className="grid grid-cols-3 p-1 bg-slate-100 rounded-lg border border-slate-200 gap-1 text-xs font-semibold">
         <button
           type="button"
           onClick={() => {
             setActiveRole('MAHASANTRI');
             setError(null);
           }}
-          className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl transition-all ${
+          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md transition-colors ${
             activeRole === 'MAHASANTRI'
-              ? 'bg-white text-uin-primary shadow-sm'
+              ? 'bg-white text-slate-900 shadow-xs'
               : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          <User className="w-4 h-4" />
+          <User className="w-3.5 h-3.5" />
           <span>Mahasantri</span>
         </button>
         <button
@@ -264,14 +254,14 @@ function LoginForm() {
             setPgrPassword('');
             setError(null);
           }}
-          className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl transition-all ${
+          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md transition-colors ${
             activeRole === 'PENGURUS'
-              ? 'bg-white text-uin-primary shadow-sm'
+              ? 'bg-white text-slate-900 shadow-xs'
               : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          <QrCode className="w-4 h-4" />
-          <span>Pengurus Lorong</span>
+          <QrCode className="w-3.5 h-3.5" />
+          <span>Pengurus</span>
         </button>
 
         <button
@@ -282,23 +272,23 @@ function LoginForm() {
             setAdmPassword('');
             setError(null);
           }}
-          className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl transition-all ${
+          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md transition-colors ${
             activeRole === 'ADMIN'
-              ? 'bg-white text-uin-primary shadow-sm'
+              ? 'bg-white text-slate-900 shadow-xs'
               : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          <ShieldCheck className="w-4 h-4" />
+          <ShieldCheck className="w-3.5 h-3.5" />
           <span>Admin</span>
         </button>
       </div>
 
       {/* Main Login Box */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
+      <div className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
         
         {/* Error Alert */}
         {error && (
-          <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2.5 text-rose-800 text-xs">
+          <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg flex items-start gap-2.5 text-rose-800 text-xs">
             <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
             <div className="flex-1 font-medium">{error}</div>
           </div>
@@ -306,8 +296,8 @@ function LoginForm() {
 
         {/* Success Alert */}
         {successMsg && (
-          <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-2xl flex items-center gap-2.5 text-emerald-900 text-xs font-bold">
-            <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+          <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-lg flex items-center gap-2.5 text-emerald-900 text-xs font-semibold">
+            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
             <div className="flex-1">{successMsg}</div>
           </div>
         )}
@@ -315,36 +305,35 @@ function LoginForm() {
         {/* TAB 1: MAHASANTRI LOGIN */}
         {activeRole === 'MAHASANTRI' && (
           <div>
-            
             {/* Step 1: Input NISN / NIM */}
             {mhsStep === 'ENTER_NIM' && (
-              <form onSubmit={handleCheckMahasantri} className="space-y-4">
+              <form onSubmit={handleCheckMahasantri} className="space-y-3.5">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Nomor Induk Siswa Nasional (NISN) atau NIM Sesuai SK
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                    Nomor Identitas (NISN / NIM Sesuai SK)
                   </label>
                   <div className="relative">
-                    <User className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                    <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
                       required
-                      placeholder="Contoh NISN: 0067999651 atau NIM: 2530311086"
+                      placeholder="Contoh: 0067999651 atau 2530311086"
                       value={mhsNimNisn}
                       onChange={(e) => setMhsNimNisn(e.target.value)}
-                      className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-uin-primary/30 outline-none"
+                      className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm font-mono focus:bg-white focus:border-uin-primary outline-none transition-colors"
                     />
                   </div>
                   <p className="text-[11px] text-slate-400 mt-1">
-                    Gunakan nomor identitas yang tercantum di Surat Keputusan (SK) Resmi Ma&apos;had.
+                    Gunakan nomor identitas yang tercantum pada Surat Keputusan (SK) resmi.
                   </p>
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex items-center justify-center gap-2 py-3.5 bg-uin-primary hover:bg-uin-secondary text-white font-bold text-sm rounded-xl shadow-md transition-all"
+                  className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-uin-primary hover:bg-uin-secondary text-white font-semibold text-xs sm:text-sm rounded-lg shadow-xs transition-colors"
                 >
-                  <span>{loading ? 'Memeriksa SK...' : 'Lanjutkan Verifikasi Identitas'}</span>
+                  <span>{loading ? 'Memeriksa SK...' : 'Lanjutkan Verifikasi'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </form>
@@ -352,30 +341,30 @@ function LoginForm() {
 
             {/* Step 2A: Create PIN (First-time Activation) */}
             {mhsStep === 'CREATE_PIN' && mhsVerifiedSK && (
-              <form onSubmit={handleActivateMahasantriPin} className="space-y-4">
+              <form onSubmit={handleActivateMahasantriPin} className="space-y-3.5">
                 
-                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-1">
-                  <div className="flex items-center gap-2 text-emerald-900 font-bold text-sm">
-                    <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
-                    <span>Identitas Terdaftar di SK Resmi!</span>
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg space-y-0.5">
+                  <div className="flex items-center gap-1.5 text-emerald-900 font-semibold text-xs">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Identitas Terdaftar di SK Resmi</span>
                   </div>
-                  <p className="text-xs text-slate-700 font-semibold">{mhsVerifiedSK.nama}</p>
+                  <p className="text-xs text-slate-800 font-semibold">{mhsVerifiedSK.nama}</p>
                   <p className="text-[11px] text-slate-500">{mhsVerifiedSK.jurusan} &bull; {mhsVerifiedSK.fakultas}</p>
                 </div>
 
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] text-slate-600 flex items-start gap-2">
+                  <Info className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
                   <p>
-                    <strong>Aktivasi Pertama Kali:</strong> Buat <strong>PIN Rahasia 6-Digit</strong> agar akun Anda tidak bisa diakses atau disalahgunakan oleh teman/orang lain.
+                    <strong>Aktivasi Pertama Kali:</strong> Buat <strong>PIN Rahasia 6-Digit</strong> untuk mengamankan akun dan pemilihan kamar Anda.
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Buat PIN Rahasia Baru (6 Digit Angka) <span className="text-rose-500">*</span>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                    Buat PIN Baru (6 Digit) <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
-                    <Lock className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type={showPin ? 'text' : 'password'}
                       maxLength={6}
@@ -383,12 +372,12 @@ function LoginForm() {
                       placeholder="Contoh: 123456"
                       value={mhsPin}
                       onChange={(e) => setMhsPin(e.target.value.replace(/\D/g, ''))}
-                      className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-uin-primary/30 outline-none tracking-widest"
+                      className="w-full pl-9 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm font-mono focus:bg-white focus:border-uin-primary outline-none tracking-widest transition-colors"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPin(!showPin)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                     >
                       {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -396,11 +385,11 @@ function LoginForm() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Ulangi Konfirmasi PIN (6 Digit) <span className="text-rose-500">*</span>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                    Konfirmasi Ulang PIN (6 Digit) <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
-                    <Lock className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type={showPin ? 'text' : 'password'}
                       maxLength={6}
@@ -408,37 +397,37 @@ function LoginForm() {
                       placeholder="Ulangi 6 digit PIN"
                       value={mhsConfirmPin}
                       onChange={(e) => setMhsConfirmPin(e.target.value.replace(/\D/g, ''))}
-                      className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-uin-primary/30 outline-none tracking-widest"
+                      className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm font-mono focus:bg-white focus:border-uin-primary outline-none tracking-widest transition-colors"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Nomor WhatsApp Aktif Mahasantri <span className="text-rose-500">*</span>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                    Nomor WhatsApp Aktif <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
-                    <Phone className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                    <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="tel"
                       required
-                      placeholder="Contoh: 081234567890"
+                      placeholder="081234567890"
                       value={mhsNoWa}
                       onChange={(e) => setMhsNoWa(e.target.value)}
-                      className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-uin-primary/30 outline-none font-mono"
+                      className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm focus:bg-white focus:border-uin-primary outline-none font-mono transition-colors"
                     />
                   </div>
-                  <p className="text-[10px] text-slate-400 mt-1">Digunakan untuk konfirmasi dan bantuan pemulihan PIN jika lupa.</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">Digunakan untuk konfirmasi dan bantuan pemulihan PIN.</p>
                 </div>
 
-                <div className="flex gap-2 pt-2">
+                <div className="flex gap-2 pt-2 border-t border-slate-100">
                   <button
                     type="button"
                     onClick={() => {
                       setMhsStep('ENTER_NIM');
                       setError(null);
                     }}
-                    className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl"
+                    className="px-3.5 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs rounded-lg transition-colors"
                   >
                     Kembali
                   </button>
@@ -446,10 +435,10 @@ function LoginForm() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-uin-primary hover:bg-uin-secondary text-white font-bold text-xs sm:text-sm rounded-xl shadow transition-all"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-uin-primary hover:bg-uin-secondary text-white font-semibold text-xs rounded-lg shadow-xs transition-colors"
                   >
-                    <ShieldCheck className="w-4 h-4" />
-                    <span>{loading ? 'Menyimpan PIN...' : 'Simpan PIN & Lanjut Masuk'}</span>
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>{loading ? 'Menyimpan PIN...' : 'Simpan PIN & Lanjut'}</span>
                   </button>
                 </div>
 
@@ -458,20 +447,20 @@ function LoginForm() {
 
             {/* Step 2B: Login with existing PIN */}
             {mhsStep === 'ENTER_PIN' && mhsVerifiedSK && (
-              <form onSubmit={handleLoginMahasantriPin} className="space-y-4">
+              <form onSubmit={handleLoginMahasantriPin} className="space-y-3.5">
                 
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
-                  <span className="text-[10px] uppercase tracking-wider font-bold text-uin-primary">Akun Mahasantri Terverifikasi</span>
-                  <h3 className="text-base font-bold text-slate-800">{mhsVerifiedSK.nama}</h3>
-                  <p className="text-xs text-slate-500">NIM/NISN: {mhsVerifiedSK.nimNisn} &bull; {mhsVerifiedSK.jurusan}</p>
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-0.5">
+                  <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">Akun Mahasantri Terverifikasi</span>
+                  <h3 className="text-sm font-semibold text-slate-900">{mhsVerifiedSK.nama}</h3>
+                  <p className="text-[11px] text-slate-500">NIM/NISN: {mhsVerifiedSK.nimNisn} &bull; {mhsVerifiedSK.jurusan}</p>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                     Masukkan PIN Rahasia Anda (6 Digit)
                   </label>
                   <div className="relative">
-                    <Lock className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type={showPin ? 'text' : 'password'}
                       maxLength={6}
@@ -479,12 +468,12 @@ function LoginForm() {
                       placeholder="Masukkan 6 Digit PIN"
                       value={mhsPin}
                       onChange={(e) => setMhsPin(e.target.value.replace(/\D/g, ''))}
-                      className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-uin-primary/30 outline-none tracking-widest"
+                      className="w-full pl-9 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm font-mono focus:bg-white focus:border-uin-primary outline-none tracking-widest transition-colors"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPin(!showPin)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                     >
                       {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -508,7 +497,7 @@ function LoginForm() {
                     href={`https://wa.me/${SK_INFO.contactPerson.replace(/\D/g, '')}?text=Halo%20Admin%20Mahad,%20saya%20lupa%20PIN%20Mahasantri%20atas%20nama%20${encodeURIComponent(mhsVerifiedSK.nama)}%20(NIM/NISN:%20${mhsVerifiedSK.nimNisn})`}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-uin-primary hover:underline font-bold"
+                    className="text-uin-primary hover:underline font-semibold"
                   >
                     Lupa PIN?
                   </a>
@@ -517,9 +506,9 @@ function LoginForm() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex items-center justify-center gap-2 py-3.5 bg-uin-primary hover:bg-uin-secondary text-white font-bold text-sm rounded-xl shadow-md transition-all"
+                  className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-uin-primary hover:bg-uin-secondary text-white font-semibold text-xs sm:text-sm rounded-lg shadow-xs transition-colors"
                 >
-                  <Lock className="w-4 h-4" />
+                  <Lock className="w-3.5 h-3.5" />
                   <span>{loading ? 'Memverifikasi...' : 'Buka Portal Mahasantri'}</span>
                 </button>
 
@@ -531,19 +520,18 @@ function LoginForm() {
 
         {/* TAB 2: PENGURUS LORONG LANTAI LOGIN */}
         {activeRole === 'PENGURUS' && (
-          <form onSubmit={handleLoginPengurus} className="space-y-4" autoComplete="off">
-            
+          <form onSubmit={handleLoginPengurus} className="space-y-3.5" autoComplete="off">
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                 Pilih Nama Petugas Pengurus / Mudabbir
               </label>
               <select
                 value={pgrUsername}
                 onChange={(e) => {
                   setPgrUsername(e.target.value);
-                  setPgrPassword(''); // Password remains empty on change
+                  setPgrPassword('');
                 }}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-uin-primary/30 outline-none"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm font-medium text-slate-800 focus:bg-white focus:border-uin-primary outline-none transition-colors"
               >
                 {pengurusList.map((p) => (
                   <option key={p.id || p.username} value={p.username || p.id}>
@@ -554,11 +542,11 @@ function LoginForm() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                 Password Petugas Pengurus
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type={showPgrPassword ? 'text' : 'password'}
                   required
@@ -566,12 +554,12 @@ function LoginForm() {
                   placeholder="Masukkan Password Pengurus"
                   value={pgrPassword}
                   onChange={(e) => setPgrPassword(e.target.value)}
-                  className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-uin-primary/30 outline-none"
+                  className="w-full pl-9 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm font-mono focus:bg-white focus:border-uin-primary outline-none transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPgrPassword(!showPgrPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
                   {showPgrPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -581,29 +569,26 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm rounded-xl shadow-md transition-all"
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-uin-primary hover:bg-uin-secondary text-white font-semibold text-xs sm:text-sm rounded-lg shadow-xs transition-colors"
             >
               <QrCode className="w-4 h-4" />
               <span>{loading ? 'Masuk...' : 'Masuk ke Panel Scanner Lantai'}</span>
             </button>
-
           </form>
         )}
 
-        {/* TAB 3: ADMIN LOGIN (STRICTLY BLANK & BULLETPROOF ANTI-AUTOFILL) */}
+        {/* TAB 3: ADMIN LOGIN */}
         {activeRole === 'ADMIN' && (
-          <form onSubmit={handleLoginAdmin} className="space-y-4" autoComplete="off">
-            
-            {/* Hidden dummy input to prevent browser password managers from auto-filling */}
+          <form onSubmit={handleLoginAdmin} className="space-y-3.5" autoComplete="off">
             <input type="text" name="prevent_autofill_fake_user" style={{ display: 'none' }} tabIndex={-1} />
             <input type="password" name="prevent_autofill_fake_pass" style={{ display: 'none' }} tabIndex={-1} />
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                 Email Superadmin
               </label>
               <div className="relative">
-                <User className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   name="admin_login_auth_identity"
@@ -615,17 +600,17 @@ function LoginForm() {
                   placeholder="admin@mahad.uinssc.ac.id"
                   value={admEmail}
                   onChange={(e) => setAdmEmail(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-uin-primary/30 outline-none"
+                  className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm font-mono focus:bg-white focus:border-uin-primary outline-none transition-colors"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                 Password Superadmin
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type={showAdmPassword ? 'text' : 'password'}
                   name="admin_login_auth_secret_key"
@@ -634,12 +619,12 @@ function LoginForm() {
                   placeholder="Masukkan Password Superadmin"
                   value={admPassword}
                   onChange={(e) => setAdmPassword(e.target.value)}
-                  className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-uin-primary/30 outline-none"
+                  className="w-full pl-9 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm font-mono focus:bg-white focus:border-uin-primary outline-none transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => setShowAdmPassword(!showAdmPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
                   {showAdmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -649,21 +634,20 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3.5 bg-slate-900 hover:bg-black text-white font-bold text-sm rounded-xl shadow-md transition-all"
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs sm:text-sm rounded-lg shadow-xs transition-colors"
             >
               <ShieldCheck className="w-4 h-4" />
               <span>{loading ? 'Masuk...' : 'Masuk Dashboard Superadmin'}</span>
             </button>
-
           </form>
         )}
 
       </div>
 
       {/* Info Helpdesk */}
-      <div className="text-center text-xs text-slate-500 space-y-1">
-        <p>Butuh bantuan atau kendala login?</p>
-        <p>Hubungi Helpdesk Ma&apos;had: <strong className="text-slate-700">{SK_INFO.contactPerson}</strong></p>
+      <div className="text-center text-xs text-slate-500 space-y-0.5">
+        <p>Bantuan teknis atau kendala verifikasi identitas:</p>
+        <p>Sekretariat Ma&apos;had: <strong className="text-slate-700 font-semibold">{SK_INFO.contactPerson}</strong></p>
       </div>
 
     </div>

@@ -431,7 +431,7 @@ export const MahadStore = {
     if (!skData) {
       return {
         isAllowed: false,
-        error: `⛔ AKSES DITOLAK: NIM / NISN "${query.trim()}" tidak terdaftar dalam SK Pengumuman Mahad. Hanya nama yang tercantum di SK yang berhak memilih kamar.`,
+        error: `Akses Ditolak: NIM / NISN "${query.trim()}" tidak terdaftar dalam SK Pengumuman Mahad. Hanya nama yang tercantum di SK yang berhak memilih kamar.`,
       };
     }
 
@@ -759,7 +759,7 @@ export const MahadStore = {
     if (mhsData.jenisKelamin && room.gender && mhsData.jenisKelamin !== room.gender) {
       return {
         success: false,
-        error: `⛔ AKSES DITOLAK: Mahasantri ${
+        error: `Akses Ditolak: Mahasantri ${
           mhsData.jenisKelamin === 'L' ? 'Putra (L)' : 'Putri (P)'
         } tidak dapat memilih kamar khusus ${room.gender === 'L' ? 'Putra' : 'Putri'} (${room.gedung} Kamar ${room.nomor}).`,
       };
@@ -1356,7 +1356,7 @@ export const MahadAuth = {
     if (skData.pin !== pin.trim()) {
       return {
         success: false,
-        error: '⛔ PIN Keamanan Salah! Pastikan memasukkan PIN yang Anda buat saat pertama kali mendaftar.',
+        error: 'PIN Keamanan Salah! Pastikan memasukkan PIN yang Anda buat saat pertama kali mendaftar.',
       };
     }
 

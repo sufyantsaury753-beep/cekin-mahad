@@ -9,10 +9,8 @@ import {
   ShieldCheck,
   Building2,
   CheckCircle2,
-  Users,
   Clock,
-  Key,
-  HelpCircle,
+  QrCode,
 } from 'lucide-react';
 
 export default function ScannerPage() {
@@ -44,32 +42,35 @@ function ScannerPageContent() {
   const totalRegistered = mhsList.length;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       
       {/* Header Station */}
-      <div className="bg-gradient-to-r from-uin-dark via-uin-primary to-emerald-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center text-uin-accent">
-              <ShieldCheck className="w-7 h-7" />
-            </div>
-            <div>
-              <span className="text-[10px] uppercase font-bold tracking-wider text-uin-accent block">
-                PORTAL PENGURUS LANTAI / LORONG KAMAR
+      <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-emerald-50 text-uin-primary border border-emerald-100 flex items-center justify-center shrink-0">
+            <QrCode className="w-5 h-5" />
+          </div>
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] uppercase font-semibold text-slate-500 tracking-wider">
+                Pos Check-In Lantai
               </span>
-              <h1 className="text-xl sm:text-2xl font-serif font-bold text-white">
-                Pos E-Checkin &amp; Serah Terima Kunci
-              </h1>
-              <p className="text-xs text-emerald-200">Gedung Ma&apos;had Qodim &bull; Hari-H Kedatangan</p>
+              <span className="text-[10px] bg-slate-100 text-slate-600 font-medium px-2 py-0.5 rounded border border-slate-200">
+                Hari-H
+              </span>
             </div>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+              Pemindaian E-Tiket &amp; Serah Terima Kunci
+            </h1>
+            <p className="text-xs text-slate-500">Pemeriksaan barcode santri dan validasi barang bawaan SOP Ma&apos;had.</p>
           </div>
+        </div>
 
-          <div className="bg-white/10 backdrop-blur px-4 py-2 rounded-xl border border-white/15 text-center">
-            <span className="text-[10px] uppercase text-emerald-200 block font-semibold">Progres Check-In</span>
-            <span className="text-lg font-bold font-mono text-uin-accent">
-              {totalCheckedIn} / {totalRegistered} Mahasantri
-            </span>
-          </div>
+        <div className="bg-slate-50 px-4 py-2.5 rounded-lg border border-slate-200 text-left sm:text-right shrink-0">
+          <span className="text-[11px] uppercase text-slate-500 block font-medium">Progres Kehadiran</span>
+          <span className="text-base font-bold font-mono text-slate-900">
+            {totalCheckedIn} / {totalRegistered} <span className="text-xs font-normal text-slate-500">Santri</span>
+          </span>
         </div>
       </div>
 
@@ -77,36 +78,36 @@ function ScannerPageContent() {
       <CameraQRScanner />
 
       {/* Recent Check-in Logs */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+      <div className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-3.5">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-          <h3 className="font-bold text-sm text-slate-800 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-emerald-600" />
-            Aktivitas Check-In Terbaru
+          <h3 className="font-semibold text-sm text-slate-900 flex items-center gap-2">
+            <Clock className="w-4 h-4 text-slate-500" />
+            <span>Aktivitas Check-In Terbaru</span>
           </h3>
           <span className="text-xs text-slate-400">{logs.length} riwayat</span>
         </div>
 
         {logs.length === 0 ? (
-          <div className="text-center py-8 text-xs text-slate-400">
+          <div className="text-center py-6 text-xs text-slate-400 font-normal">
             Belum ada mahasantri yang melakukan check-in pada sesi ini.
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
             {logs.slice(0, 5).map((log) => (
-              <div key={log.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs shrink-0">
-                    <CheckCircle2 className="w-4 h-4" />
+              <div key={log.id} className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center font-bold text-xs shrink-0">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
                   </div>
                   <div>
-                    <span className="font-bold text-slate-800 block">{log.nama}</span>
-                    <span className="text-slate-500 font-mono">NIM/NISN: {log.mahasantriNimNisn || log.nimNisn}</span>
+                    <span className="font-semibold text-slate-900 block">{log.nama}</span>
+                    <span className="text-slate-500 font-mono text-[11px]">NIM/NISN: {log.mahasantriNimNisn || log.nimNisn}</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4 text-right">
-                  <div className="text-left sm:text-right">
-                    <span className="font-bold text-uin-primary block">Kamar {log.nomorKamar} (Bed {log.bedNumber})</span>
+                <div className="flex items-center gap-4 text-left sm:text-right">
+                  <div>
+                    <span className="font-semibold text-uin-primary block">Kamar {log.nomorKamar} (Bed {log.bedNumber})</span>
                     <span className="text-[11px] text-slate-400">Petugas: {log.petugas}</span>
                   </div>
                   <span className="text-[11px] font-mono text-slate-400 shrink-0">

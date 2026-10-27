@@ -10,11 +10,11 @@ import {
   Home,
   Menu,
   X,
-  Sparkles,
   LogIn,
   LogOut,
   User,
-  KeyRound,
+  ClipboardCheck,
+  GraduationCap,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { MahadAuth } from '@/lib/store';
@@ -46,7 +46,6 @@ export default function Navbar() {
   // Determine navigation links based on user role
   const getNavLinks = () => {
     if (!session) {
-      // Guest / Belum Login
       return [
         { href: '/', label: 'Beranda', icon: Home },
         { href: '/daftar', label: 'Pilih Kamar', icon: BedDouble },
@@ -55,7 +54,6 @@ export default function Navbar() {
     }
 
     if (session.role === 'MAHASANTRI') {
-      // Mahasantri View: Hanya fitur santri (Pilih Kamar & E-Tiket)
       return [
         { href: '/', label: 'Beranda', icon: Home },
         { href: '/daftar', label: 'Pilih Kamar & Formulir', icon: BedDouble },
@@ -64,7 +62,6 @@ export default function Navbar() {
     }
 
     if (session.role === 'PENGURUS') {
-      // Pengurus View: Hanya scanner lorong & cek tiket
       return [
         { href: '/', label: 'Beranda', icon: Home },
         {
@@ -78,7 +75,6 @@ export default function Navbar() {
     }
 
     if (session.role === 'ADMIN') {
-      // Superadmin View: Semua fitur termasuk Dashboard Admin SK
       return [
         { href: '/', label: 'Beranda', icon: Home },
         { href: '/admin', label: 'Dashboard Admin SK', icon: ShieldCheck, highlight: true },
@@ -94,13 +90,12 @@ export default function Navbar() {
   const navLinks = getNavLinks();
 
   return (
-    <header className="sticky top-0 z-50 bg-uin-dark/95 backdrop-blur text-white border-b border-uin-primary/40 shadow-lg no-print">
+    <header className="sticky top-0 z-50 bg-slate-900 border-b border-slate-800 text-white shadow-xs no-print">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
-          
+        <div className="flex items-center justify-between h-16">
           {/* Logo & Identity */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-12 h-12 rounded-full overflow-hidden bg-white p-0.5 shadow-md flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform border border-emerald-400/40">
+            <div className="w-9 h-9 rounded-md overflow-hidden bg-white p-0.5 shadow-xs flex items-center justify-center shrink-0 border border-slate-700">
               <img
                 src="/logo-mahad.png"
                 alt="Logo Ma'had UINSSC"
@@ -109,16 +104,16 @@ export default function Navbar() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-base sm:text-lg tracking-wide text-white font-serif">MA&apos;HAD AL-JAMI&apos;AH</span>
-                <span className="bg-uin-accent/20 text-uin-accent text-[9px] font-semibold px-2 py-0.5 rounded-full border border-uin-accent/30 hidden sm:flex items-center gap-1">
-                  <Sparkles className="w-2.5 h-2.5" /> UIN SSC
+                <span className="font-semibold text-sm tracking-tight text-white">MA&apos;HAD AL-JAMI&apos;AH</span>
+                <span className="bg-emerald-950 text-emerald-400 border border-emerald-800 text-[10px] font-semibold px-2 py-0.5 rounded">
+                  UIN SSC
                 </span>
               </div>
-              <p className="text-[11px] text-emerald-300 font-medium">UIN Siber Syekh Nurjati Cirebon &bull; E-Check In</p>
+              <p className="text-[11px] text-slate-400 font-normal leading-none mt-0.5">Sistem Manajemen &amp; E-Check In</p>
             </div>
           </Link>
 
-          {/* Desktop Navigation (Filtered by Role) */}
+          {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-1">
             {navLinks.map((link) => {
               const Icon = link.icon;
@@ -127,15 +122,15 @@ export default function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                     isActive
-                      ? 'bg-uin-primary text-uin-accent shadow-inner'
+                      ? 'bg-slate-800 text-white border border-slate-700'
                       : link.highlight
-                      ? 'bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600/50'
-                      : 'text-gray-200 hover:text-white hover:bg-white/10'
+                      ? 'text-emerald-300 hover:text-white hover:bg-slate-800/60'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-uin-accent' : ''}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-400' : 'text-slate-400'}`} />
                   <span>{link.label}</span>
                 </Link>
               );
@@ -143,25 +138,42 @@ export default function Navbar() {
           </nav>
 
           {/* Auth State & Role Badge (Desktop) */}
-          <div className="hidden sm:flex items-center gap-2.5">
+          <div className="hidden sm:flex items-center gap-3">
             {session ? (
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur pl-3 pr-1.5 py-1.5 rounded-xl border border-white/20">
+              <div className="flex items-center gap-2.5 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/80">
                 <div className="text-right">
-                  <span className="text-xs font-bold text-white block max-w-[140px] truncate">
+                  <span className="text-xs font-semibold text-white block max-w-[150px] truncate leading-tight">
                     {session.name}
                   </span>
-                  <span className="text-[9px] font-bold text-uin-accent uppercase tracking-wider block">
-                    {session.role === 'ADMIN' && '👑 Superadmin'}
-                    {session.role === 'PENGURUS' && `📋 Pengurus Lt. ${session.floorAssigned || ''}`}
-                    {session.role === 'MAHASANTRI' && '🎓 Mahasantri SK'}
-                  </span>
+                  <div className="flex items-center justify-end gap-1 text-[11px] text-slate-400 mt-0.5">
+                    {session.role === 'ADMIN' && (
+                      <>
+                        <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                        <span className="text-emerald-400 font-medium">Superadmin</span>
+                      </>
+                    )}
+                    {session.role === 'PENGURUS' && (
+                      <>
+                        <ClipboardCheck className="w-3 h-3 text-sky-400" />
+                        <span className="text-sky-300 font-medium">Pengurus Lt. {session.floorAssigned || ''}</span>
+                      </>
+                    )}
+                    {session.role === 'MAHASANTRI' && (
+                      <>
+                        <GraduationCap className="w-3 h-3 text-emerald-400" />
+                        <span className="text-slate-300 font-medium">Mahasantri</span>
+                      </>
+                    )}
+                  </div>
                 </div>
+
+                <div className="h-6 w-px bg-slate-700 ml-1"></div>
 
                 <button
                   type="button"
                   onClick={handleLogout}
                   title="Logout / Ganti Akun"
-                  className="p-2 rounded-lg text-slate-300 hover:text-rose-300 hover:bg-rose-500/20 transition-all"
+                  className="p-1.5 rounded-md text-slate-400 hover:text-rose-400 hover:bg-slate-700/60 transition-colors"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
@@ -169,7 +181,7 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/login"
-                className="flex items-center gap-1.5 px-4 py-2 bg-uin-accent hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl shadow transition-all"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-uin-primary hover:bg-uin-secondary text-white font-medium text-xs rounded-lg transition-colors border border-emerald-700/60"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>Masuk Akun</span>
@@ -181,42 +193,55 @@ export default function Navbar() {
           <div className="lg:hidden flex items-center gap-2">
             <Link
               href="/login"
-              className="p-2 rounded-lg bg-white/10 text-uin-accent hover:bg-white/20"
+              className="p-2 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700"
               title="Portal Login"
             >
-              <User className="w-5 h-5" />
+              <User className="w-4 h-4" />
             </Link>
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg bg-uin-primary/50 text-white hover:bg-uin-primary focus:outline-none"
+              className="p-2 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700 focus:outline-none"
               aria-label="Toggle menu"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
 
         {/* Mobile Dropdown */}
         {mobileMenuOpen && (
-          <div className="lg:hidden py-4 border-t border-uin-primary/40 space-y-2">
-            
-            {/* Logged in info on mobile */}
+          <div className="lg:hidden py-3 border-t border-slate-800 space-y-1">
             {session ? (
-              <div className="p-3 bg-white/10 rounded-xl flex items-center justify-between border border-white/15 mb-3">
+              <div className="p-3 bg-slate-800/80 rounded-lg flex items-center justify-between border border-slate-700 mb-2">
                 <div>
-                  <span className="text-xs font-bold text-white block">{session.name}</span>
-                  <span className="text-[10px] text-uin-accent font-bold">
-                    {session.role === 'ADMIN' && '👑 Superadmin'}
-                    {session.role === 'PENGURUS' && `📋 Pengurus Lantai ${session.floorAssigned}`}
-                    {session.role === 'MAHASANTRI' && '🎓 Mahasantri SK'}
-                  </span>
+                  <span className="text-xs font-semibold text-white block">{session.name}</span>
+                  <div className="flex items-center gap-1 text-[11px] text-slate-400 mt-0.5">
+                    {session.role === 'ADMIN' && (
+                      <>
+                        <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                        <span className="text-emerald-400 font-medium">Superadmin</span>
+                      </>
+                    )}
+                    {session.role === 'PENGURUS' && (
+                      <>
+                        <ClipboardCheck className="w-3 h-3 text-sky-400" />
+                        <span className="text-sky-300 font-medium">Pengurus Lantai {session.floorAssigned}</span>
+                      </>
+                    )}
+                    {session.role === 'MAHASANTRI' && (
+                      <>
+                        <GraduationCap className="w-3 h-3 text-emerald-400" />
+                        <span className="text-slate-300 font-medium">Mahasantri SK</span>
+                      </>
+                    )}
+                  </div>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="px-3 py-1 bg-rose-600/30 text-rose-300 text-xs font-bold rounded-lg border border-rose-500/30 flex items-center gap-1"
+                  className="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-medium rounded border border-rose-500/20 flex items-center gap-1"
                 >
-                  <LogOut className="w-3 h-3" />
+                  <LogOut className="w-3.5 h-3.5" />
                   <span>Logout</span>
                 </button>
               </div>
@@ -224,10 +249,10 @@ export default function Navbar() {
               <Link
                 href="/login"
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-full flex items-center justify-center gap-2 p-3 bg-uin-accent text-slate-950 font-bold text-xs rounded-xl shadow mb-3"
+                className="w-full flex items-center justify-center gap-2 p-2.5 bg-uin-primary hover:bg-uin-secondary text-white font-medium text-xs rounded-lg mb-2 transition-colors"
               >
-                <LogIn className="w-4 h-4" />
-                <span>Masuk Akun (Mahasantri / Pengurus / Admin)</span>
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Masuk Akun</span>
               </Link>
             )}
 
@@ -239,22 +264,19 @@ export default function Navbar() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium ${
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                     isActive
-                      ? 'bg-uin-primary text-uin-accent'
-                      : link.highlight
-                      ? 'bg-emerald-600/30 text-emerald-300'
-                      : 'text-gray-200 hover:bg-white/10'
+                      ? 'bg-slate-800 text-white border border-slate-700'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-4 h-4 text-slate-400" />
                   <span>{link.label}</span>
                 </Link>
               );
             })}
           </div>
         )}
-
       </div>
     </header>
   );

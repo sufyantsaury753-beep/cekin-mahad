@@ -9,10 +9,13 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["var(--font-sans)", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+      },
       colors: {
         uin: {
           primary: "#0D5C3A", // Islamic Green (Syekh Nurjati Theme)
-          secondary: "#15803d",
+          secondary: "#0A482E",
           accent: "#D4AF37", // Gold accent
           dark: "#083321",
           light: "#E8F5E9",

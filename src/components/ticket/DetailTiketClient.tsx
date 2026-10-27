@@ -6,7 +6,7 @@ import { MahadStore, MahadAuth } from '@/lib/store';
 import { Mahasantri } from '@/lib/types';
 import BoardingPassCard from '@/components/ticket/BoardingPassCard';
 import Link from 'next/link';
-import { ArrowLeft, AlertCircle } from 'lucide-react';
+import { ArrowLeft, AlertCircle, ShieldAlert } from 'lucide-react';
 
 interface DetailTiketClientProps {
   nimNisn: string;
@@ -28,12 +28,11 @@ export default function DetailTiketClient({ nimNisn }: DetailTiketClientProps) {
   const session = typeof window !== 'undefined' ? MahadAuth.getSession() : null;
   const isMahasantriSession = session && session.role === 'MAHASANTRI';
   const isViewingSelf = isMahasantriSession && session.identifier.toLowerCase() === decodeURIComponent(nimNisn).toLowerCase();
-  const isAuthorized = !isMahasantriSession || isViewingSelf;
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto py-20 text-center text-slate-500 text-sm">
-        Memuat E-Tiket Mahasantri...
+      <div className="max-w-2xl mx-auto py-20 text-center text-slate-400 text-sm">
+        Memuat data E-Tiket Mahasantri...
       </div>
     );
   }
@@ -42,17 +41,19 @@ export default function DetailTiketClient({ nimNisn }: DetailTiketClientProps) {
   if (isMahasantriSession && !isViewingSelf) {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center space-y-4">
-        <div className="w-14 h-14 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
-          <AlertCircle className="w-7 h-7" />
+        <div className="w-12 h-12 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center mx-auto">
+          <ShieldAlert className="w-6 h-6" />
         </div>
-        <h2 className="text-xl font-bold text-slate-800">Akses Tiket Dibatasi</h2>
-        <p className="text-xs text-slate-500">
-          Demi privasi dan keamanan data, Anda hanya memiliki hak akses untuk melihat E-Tiket atas nama Anda sendiri (<strong>{session.name}</strong>).
-        </p>
-        <div className="pt-3">
+        <div className="space-y-1">
+          <h2 className="text-xl font-bold text-slate-900">Akses Tiket Dibatasi</h2>
+          <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            Demi privasi dan keamanan data, Anda hanya memiliki hak akses untuk melihat E-Tiket atas nama Anda sendiri (<strong className="text-slate-800">{session.name}</strong>).
+          </p>
+        </div>
+        <div className="pt-2">
           <Link
             href="/tiket"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-uin-primary text-white text-xs font-bold rounded-xl hover:bg-uin-secondary shadow-md transition-all"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-uin-primary text-white text-xs font-medium rounded-lg hover:bg-uin-secondary shadow-xs transition-colors"
           >
             <span>Buka E-Tiket Saya</span>
           </Link>
@@ -64,23 +65,25 @@ export default function DetailTiketClient({ nimNisn }: DetailTiketClientProps) {
   if (!mahasantri) {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center space-y-4">
-        <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+        <div className="w-12 h-12 rounded-lg bg-red-50 text-red-600 border border-red-200 flex items-center justify-center mx-auto">
           <AlertCircle className="w-6 h-6" />
         </div>
-        <h2 className="text-xl font-bold text-slate-800">E-Tiket Tidak Ditemukan</h2>
-        <p className="text-xs text-slate-500">
-          Mahasantri dengan NIM/NISN <strong className="text-slate-700">{decodeURIComponent(nimNisn)}</strong> belum memilih kamar atau salah memasukkan identitas.
-        </p>
-        <div className="pt-2 flex flex-col gap-2">
+        <div className="space-y-1">
+          <h2 className="text-xl font-bold text-slate-900">E-Tiket Tidak Ditemukan</h2>
+          <p className="text-xs text-slate-500">
+            Mahasantri dengan NIM/NISN <strong className="text-slate-800">{decodeURIComponent(nimNisn)}</strong> belum memilih kamar atau belum terdaftar dalam sistem.
+          </p>
+        </div>
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2">
           <Link
             href="/tiket"
-            className="px-5 py-2.5 bg-slate-800 text-white text-xs font-semibold rounded-xl hover:bg-slate-900"
+            className="w-full sm:w-auto px-4 py-2 bg-white text-slate-700 text-xs font-medium rounded-lg hover:bg-slate-50 border border-slate-300 transition-colors"
           >
-            Kembali ke E-Tiket
+            Kembali ke Pencarian
           </Link>
           <Link
             href="/daftar"
-            className="px-5 py-2.5 bg-uin-primary text-white text-xs font-semibold rounded-xl hover:bg-uin-secondary"
+            className="w-full sm:w-auto px-4 py-2 bg-uin-primary text-white text-xs font-medium rounded-lg hover:bg-uin-secondary shadow-xs transition-colors"
           >
             Pilih Kamar &amp; Daftar Baru
           </Link>
@@ -92,25 +95,23 @@ export default function DetailTiketClient({ nimNisn }: DetailTiketClientProps) {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       
-      {/* Back Button (Only for Admin/Pengurus/Guest) */}
+      {/* Back Toolbar (Only for Admin/Pengurus/Guest) */}
       {!isMahasantriSession && (
         <div className="flex items-center justify-between no-print">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-900 bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-sm"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 hover:text-slate-900 bg-white px-3 py-1.5 rounded-lg border border-slate-300 shadow-xs hover:bg-slate-50 transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-3.5 h-3.5" />
             <span>Kembali</span>
           </button>
 
-          <div className="flex items-center gap-2">
-            <Link
-              href="/tiket"
-              className="text-xs text-slate-500 hover:text-slate-800 font-semibold"
-            >
-              Cari E-Tiket Lain
-            </Link>
-          </div>
+          <Link
+            href="/tiket"
+            className="text-xs text-slate-500 hover:text-slate-800 font-medium"
+          >
+            Cari E-Tiket Lain
+          </Link>
         </div>
       )}
 
