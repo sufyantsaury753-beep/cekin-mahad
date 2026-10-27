@@ -66,7 +66,7 @@ export default function HomePage() {
             <span>Pengumuman Resmi SK Rektor No: {SK_INFO.nomor}</span>
           </div>
 
-          <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-white max-w-3xl mx-auto leading-tight">
+          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white max-w-3xl mx-auto leading-[1.15]">
             Sistem Layanan Mandiri &amp; E-Check In Mahasantri
           </h1>
 

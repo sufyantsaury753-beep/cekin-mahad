@@ -500,10 +500,10 @@ function AdminDashboardContent() {
             <span className="text-slate-300">/</span>
             <span className="text-slate-700 font-semibold">Administrasi Ma&apos;had</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
             Pusat Kendali &amp; Manajemen Kamar Ma&apos;had
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 max-w-2xl">
+          <p className="text-xs sm:text-sm text-slate-500 max-w-2xl font-normal leading-relaxed">
             Pengelolaan 2 gedung asrama (Jadid &amp; Qodim), kapasitas kasur, alokasi santri, dan status hunian.
           </p>
         </div>
@@ -555,37 +555,37 @@ function AdminDashboardContent() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
           <span className="text-xs font-medium text-slate-500">Total Kamar</span>
-          <div className="text-2xl font-bold text-slate-900 mt-1 tracking-tight tabular-nums">{totalRoomsCount}</div>
+          <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1 tracking-tight tabular-nums">{totalRoomsCount}</div>
           <span className="text-xs text-slate-400 mt-1">Jadid &amp; Qodim (Lt 2-5)</span>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
           <span className="text-xs font-medium text-slate-500">Kapasitas Kasur</span>
-          <div className="text-2xl font-bold text-slate-900 mt-1 tracking-tight tabular-nums">{totalCapacity}</div>
+          <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1 tracking-tight tabular-nums">{totalCapacity}</div>
           <span className="text-xs text-emerald-600 font-medium mt-1">{totalCapacity - totalBooked} Tersedia</span>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
           <span className="text-xs font-medium text-slate-500">Santri Terdaftar</span>
-          <div className="text-2xl font-bold text-slate-900 mt-1 tracking-tight tabular-nums">{totalBooked}</div>
+          <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1 tracking-tight tabular-nums">{totalBooked}</div>
           <span className="text-xs text-slate-400 mt-1">Dari {totalSkCount} di SK</span>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
           <span className="text-xs font-medium text-slate-500">Sudah Check-In</span>
-          <div className="text-2xl font-bold text-emerald-700 mt-1 tracking-tight tabular-nums">{totalCheckedIn}</div>
+          <div className="text-2xl sm:text-3xl font-extrabold text-emerald-700 mt-1 tracking-tight tabular-nums">{totalCheckedIn}</div>
           <span className="text-xs text-slate-400 mt-1">Kunci diserahkan</span>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
           <span className="text-xs font-medium text-slate-500">Kamar Terkunci</span>
-          <div className="text-2xl font-bold text-amber-700 mt-1 tracking-tight tabular-nums">{totalLockedRooms}</div>
+          <div className="text-2xl sm:text-3xl font-extrabold text-amber-700 mt-1 tracking-tight tabular-nums">{totalLockedRooms}</div>
           <span className="text-xs text-amber-700 font-medium mt-1">Khusus / Mudabbir</span>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
           <span className="text-xs font-medium text-slate-500">Pengurus Lantai</span>
-          <div className="text-2xl font-bold text-slate-900 mt-1 tracking-tight tabular-nums">{skPengurusList.length}</div>
+          <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1 tracking-tight tabular-nums">{skPengurusList.length}</div>
           <span className="text-xs text-slate-400 mt-1">Mudabbir &amp; Mudabbirah</span>
         </div>
       </div>
