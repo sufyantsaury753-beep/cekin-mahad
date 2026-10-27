@@ -554,39 +554,39 @@ function AdminDashboardContent() {
       {/* Key Metrics Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
-          <span className="text-[11px] uppercase font-semibold text-slate-500 tracking-wider">Total Kamar</span>
-          <div className="text-2xl font-bold text-slate-900 mt-1 tracking-tight">{totalRoomsCount}</div>
-          <span className="text-[11px] text-slate-500 mt-1">Jadid &amp; Qodim (Lt 2-5)</span>
+          <span className="text-xs font-medium text-slate-500">Total Kamar</span>
+          <div className="text-2xl font-bold text-slate-900 mt-1 tracking-tight tabular-nums">{totalRoomsCount}</div>
+          <span className="text-xs text-slate-400 mt-1">Jadid &amp; Qodim (Lt 2-5)</span>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
-          <span className="text-[11px] uppercase font-semibold text-slate-500 tracking-wider">Kapasitas Ranjang</span>
-          <div className="text-2xl font-bold text-slate-900 mt-1 tracking-tight">{totalCapacity}</div>
-          <span className="text-[11px] text-emerald-600 font-medium mt-1">{totalCapacity - totalBooked} Tersedia</span>
+          <span className="text-xs font-medium text-slate-500">Kapasitas Kasur</span>
+          <div className="text-2xl font-bold text-slate-900 mt-1 tracking-tight tabular-nums">{totalCapacity}</div>
+          <span className="text-xs text-emerald-600 font-medium mt-1">{totalCapacity - totalBooked} Tersedia</span>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
-          <span className="text-[11px] uppercase font-semibold text-slate-500 tracking-wider">Santri Memilih</span>
-          <div className="text-2xl font-bold text-slate-900 mt-1 tracking-tight">{totalBooked}</div>
-          <span className="text-[11px] text-slate-500 mt-1">Dari {totalSkCount} di SK</span>
+          <span className="text-xs font-medium text-slate-500">Santri Terdaftar</span>
+          <div className="text-2xl font-bold text-slate-900 mt-1 tracking-tight tabular-nums">{totalBooked}</div>
+          <span className="text-xs text-slate-400 mt-1">Dari {totalSkCount} di SK</span>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
-          <span className="text-[11px] uppercase font-semibold text-slate-500 tracking-wider">Sudah Check-In</span>
-          <div className="text-2xl font-bold text-emerald-700 mt-1 tracking-tight">{totalCheckedIn}</div>
-          <span className="text-[11px] text-slate-500 mt-1">Kunci diserahkan</span>
+          <span className="text-xs font-medium text-slate-500">Sudah Check-In</span>
+          <div className="text-2xl font-bold text-emerald-700 mt-1 tracking-tight tabular-nums">{totalCheckedIn}</div>
+          <span className="text-xs text-slate-400 mt-1">Kunci diserahkan</span>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
-          <span className="text-[11px] uppercase font-semibold text-slate-500 tracking-wider">Kamar Terkunci</span>
-          <div className="text-2xl font-bold text-amber-700 mt-1 tracking-tight">{totalLockedRooms}</div>
-          <span className="text-[11px] text-amber-700 font-medium mt-1">Khusus / Mudabbir</span>
+          <span className="text-xs font-medium text-slate-500">Kamar Terkunci</span>
+          <div className="text-2xl font-bold text-amber-700 mt-1 tracking-tight tabular-nums">{totalLockedRooms}</div>
+          <span className="text-xs text-amber-700 font-medium mt-1">Khusus / Mudabbir</span>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
-          <span className="text-[11px] uppercase font-semibold text-slate-500 tracking-wider">Pengurus Lantai</span>
-          <div className="text-2xl font-bold text-slate-900 mt-1 tracking-tight">{skPengurusList.length}</div>
-          <span className="text-[11px] text-slate-500 mt-1">Mudabbir &amp; Mudabbirah</span>
+          <span className="text-xs font-medium text-slate-500">Pengurus Lantai</span>
+          <div className="text-2xl font-bold text-slate-900 mt-1 tracking-tight tabular-nums">{skPengurusList.length}</div>
+          <span className="text-xs text-slate-400 mt-1">Mudabbir &amp; Mudabbirah</span>
         </div>
       </div>
 
@@ -715,7 +715,7 @@ function AdminDashboardContent() {
           <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase text-[11px] tracking-wider">
+                <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold text-xs">
                   <tr>
                     <th className="py-3 px-4">Mahasantri</th>
                     <th className="py-3 px-4">Gender &amp; Jalur</th>
@@ -1139,7 +1139,7 @@ function AdminDashboardContent() {
                 <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase text-[11px] tracking-wider">
+                      <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold text-xs">
                         <tr>
                           <th className="py-3 px-4">No</th>
                           <th className="py-3 px-4">Identitas Mahasantri</th>
@@ -1325,7 +1325,7 @@ function AdminDashboardContent() {
           <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase text-[11px] tracking-wider">
+                <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold text-xs">
                   <tr>
                     <th className="py-3 px-4">Nama Pengurus</th>
                     <th className="py-3 px-4">Kredensial Login</th>

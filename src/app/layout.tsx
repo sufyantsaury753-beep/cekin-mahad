@@ -7,7 +7,7 @@ import Footer from '@/components/layout/Footer';
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
-  variable: '--font-sans',
+  variable: '--font-plus-jakarta',
   display: 'swap',
 });
 
@@ -23,7 +23,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id" className={plusJakartaSans.variable}>
-      <body className="flex flex-col min-h-screen font-sans bg-slate-50 text-slate-800 antialiased selection:bg-emerald-100 selection:text-emerald-900">
+      <body className={`${plusJakartaSans.className} flex flex-col min-h-screen bg-slate-50 text-slate-800 antialiased selection:bg-emerald-100 selection:text-emerald-900`}>
         <Navbar />
         <main className="flex-1">
           {children}
