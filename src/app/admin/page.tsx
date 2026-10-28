@@ -910,20 +910,43 @@ function AdminDashboardContent() {
             </div>
           </div>
 
+          {/* Visual Legend Bar */}
+          <div className="flex flex-wrap items-center gap-3 sm:gap-5 text-xs text-slate-600 bg-white p-3 rounded-lg border border-slate-200/90 shadow-2xs">
+            <span className="font-semibold text-slate-700">Panduan Warna:</span>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3.5 h-3.5 rounded bg-sky-100 border border-sky-300 border-l-2 border-l-sky-500"></span>
+              <span className="font-medium text-slate-800">Kamar Putra</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3.5 h-3.5 rounded bg-rose-100 border border-rose-300 border-l-2 border-l-rose-400"></span>
+              <span className="font-medium text-slate-800">Kamar Putri</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3.5 h-3.5 rounded bg-amber-100 border border-amber-300 border-l-2 border-l-amber-500"></span>
+              <span className="font-medium text-amber-900">Khusus / Mudabbir (Terkunci)</span>
+            </div>
+            <div className="flex items-center gap-2 ml-auto text-[11px] text-slate-500">
+              <span className="inline-block w-2.5 h-2.5 rounded bg-white border border-emerald-400"></span> Kasur Tersedia
+              <span className="inline-block w-2.5 h-2.5 rounded bg-slate-200 border border-slate-300 ml-2"></span> Kasur Terisi
+            </div>
+          </div>
+
           {/* Rooms Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
             {filteredRoomsList.map((kamar) => {
               const occupiedCount = kamar.beds.filter((b) => b.isOccupied).length;
+              const isLocked = kamar.isLocked;
+              const isPutra = kamar.gender === 'L';
 
               return (
                 <div
                   key={kamar.id}
-                  className={`bg-white rounded-lg p-4 border transition-colors space-y-3 ${
-                    kamar.isLocked
-                      ? 'border-amber-300 bg-amber-50/20 shadow-xs'
-                      : occupiedCount >= kamar.kapasitas
-                      ? 'border-slate-200 bg-slate-50/60'
-                      : 'border-slate-200 hover:border-slate-300 shadow-xs'
+                  className={`rounded-lg p-4 border transition-all space-y-3 ${
+                    isLocked
+                      ? 'border-amber-300/90 bg-amber-50/60 border-l-4 border-l-amber-500 shadow-2xs hover:shadow-xs'
+                      : isPutra
+                      ? 'border-sky-200/90 bg-sky-50/40 border-l-4 border-l-sky-500 shadow-2xs hover:border-sky-300 hover:shadow-xs'
+                      : 'border-rose-200/90 bg-rose-50/40 border-l-4 border-l-rose-400 shadow-2xs hover:border-rose-300 hover:shadow-xs'
                   }`}
                 >
                   {/* Room Card Top */}
@@ -933,23 +956,23 @@ function AdminDashboardContent() {
                         <h3 className="font-mono font-bold text-base text-slate-900">
                           Kamar {kamar.nomor}
                         </h3>
-                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded border ${
-                          kamar.gender === 'L'
-                            ? 'bg-blue-50 text-blue-700 border-blue-200'
-                            : 'bg-rose-50 text-rose-700 border-rose-200'
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                          isPutra
+                            ? 'bg-sky-100 text-sky-800 border-sky-300'
+                            : 'bg-rose-100 text-rose-800 border-rose-300'
                         }`}>
-                          {kamar.gender === 'L' ? 'Putra' : 'Putri'}
+                          {isPutra ? 'Putra' : 'Putri'}
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-500 mt-0.5">{kamar.gedung} &bull; Lantai {kamar.lantai}</p>
                     </div>
 
                     {kamar.isLocked ? (
-                      <span className="p-1 bg-amber-100 text-amber-800 rounded-md">
+                      <span className="p-1 bg-amber-100 text-amber-800 border border-amber-300 rounded-md">
                         <Lock className="w-3.5 h-3.5" />
                       </span>
                     ) : (
-                      <span className="p-1 bg-slate-100 text-slate-600 rounded-md">
+                      <span className="p-1 bg-white/80 text-slate-600 border border-slate-200 rounded-md">
                         <Unlock className="w-3.5 h-3.5" />
                       </span>
                     )}
@@ -957,7 +980,7 @@ function AdminDashboardContent() {
 
                   {/* Lock Reason if locked */}
                   {kamar.isLocked && (
-                    <div className="p-2 bg-amber-50 border border-amber-200 rounded-md text-[11px] text-amber-900 font-medium flex items-center gap-1.5">
+                    <div className="p-2 bg-amber-100/70 border border-amber-300/80 rounded-md text-[11px] text-amber-950 font-semibold flex items-center gap-1.5">
                       <Lock className="w-3 h-3 text-amber-700 shrink-0" />
                       <span className="truncate">{kamar.lockReason || 'Kamar Dikunci Admin'}</span>
                     </div>
@@ -976,14 +999,14 @@ function AdminDashboardContent() {
                     </div>
                     
                     {/* Visual Bed Slots */}
-                    <div className="grid grid-cols-4 gap-1 pt-1">
+                    <div className="grid grid-cols-4 gap-1.5 pt-1">
                       {kamar.beds.map((b) => (
                         <div
                           key={b.bedNumber}
-                          className={`py-1 px-1 text-center text-[10px] font-semibold rounded ${
+                          className={`py-1 px-1 text-center text-[10px] font-bold rounded ${
                             b.isOccupied
-                              ? 'bg-slate-200 text-slate-600'
-                              : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                              ? 'bg-slate-200/90 text-slate-600 border border-slate-300'
+                              : 'bg-white text-emerald-800 border border-emerald-300 shadow-2xs'
                           }`}
                           title={b.isOccupied ? `Bed ${b.bedNumber}: ${b.mahasantriNama}` : `Bed ${b.bedNumber}: Kosong`}
                         >
