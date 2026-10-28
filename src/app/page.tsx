@@ -19,6 +19,7 @@ import {
   Phone,
   LogIn,
   KeyRound,
+  FileText,
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -55,22 +56,30 @@ export default function HomePage() {
   const sisaSlot = totalKapasitas - totalTerisi;
 
   return (
-    <div className="space-y-10 pb-12">
+    <div className="space-y-12 pb-16">
       
-      {/* Institutional Hero Section */}
-      <section className="bg-slate-900 border-b border-slate-800 text-white pt-10 pb-14 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center space-y-5">
+      {/* ======================================================== */}
+      {/* 1. Academic Elite Canvas Hero                            */}
+      {/* ======================================================== */}
+      <section className="bg-gradient-to-b from-emerald-50/70 via-slate-50/40 to-white pt-12 pb-16 px-4 sm:px-6 lg:px-8 border-b border-slate-200/70 relative overflow-hidden">
+        {/* Soft Ambient Light Glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-80 bg-radial from-emerald-100/50 via-teal-50/20 to-transparent blur-3xl pointer-events-none -z-0"></div>
+
+        <div className="relative z-10 max-w-4xl mx-auto text-center space-y-6">
           
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-slate-800/80 border border-slate-700 text-xs font-medium text-emerald-400">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          {/* Institutional Badge */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/95 border border-emerald-200/90 shadow-2xs text-xs font-semibold text-emerald-900 backdrop-blur-xs">
+            <ShieldCheck className="w-4 h-4 text-uin-primary" />
             <span>Pengumuman Resmi SK Rektor No: {SK_INFO.nomor}</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white max-w-3xl mx-auto leading-[1.15]">
-            Sistem Layanan Mandiri &amp; E-Check In Mahasantri
+          {/* Main Punchy Headline */}
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 max-w-3xl mx-auto leading-[1.12]">
+            Sistem Layanan Mandiri &amp; <span className="text-uin-primary">E-Check In</span> Mahasantri
           </h1>
 
-          <p className="text-sm sm:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed">
+          {/* Subtitle */}
+          <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed font-normal">
             Mahasantri Baru (berbasis <strong>NISN</strong>), Perpanjangan (berbasis <strong>NIM</strong>), dan Internasional yang lulus SK dapat memilih kamar secara mandiri dan mengunduh <strong>E-Tiket Barcode</strong>.
           </p>
 
@@ -82,7 +91,7 @@ export default function HomePage() {
               <>
                 <Link
                   href="/scanner"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-uin-primary hover:bg-uin-secondary text-white font-semibold text-xs sm:text-sm rounded-lg shadow-xs transition-colors"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-uin-primary hover:bg-uin-secondary text-white font-bold text-xs sm:text-sm rounded-lg shadow-sm hover:shadow-md transition-all"
                 >
                   <QrCode className="w-4 h-4" />
                   <span>Buka Scanner Kamera Lt. {session.floorAssigned || ''}</span>
@@ -90,7 +99,7 @@ export default function HomePage() {
                 </Link>
                 <Link
                   href="/tiket"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-750 text-slate-200 border border-slate-700 font-medium text-xs sm:text-sm rounded-lg transition-colors"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-semibold text-xs sm:text-sm rounded-lg shadow-2xs hover:shadow-xs transition-all"
                 >
                   <span>Cari Data E-Tiket</span>
                 </Link>
@@ -102,7 +111,7 @@ export default function HomePage() {
               <>
                 <Link
                   href="/admin"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-uin-primary hover:bg-uin-secondary text-white font-semibold text-xs sm:text-sm rounded-lg shadow-xs transition-colors"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-uin-primary hover:bg-uin-secondary text-white font-bold text-xs sm:text-sm rounded-lg shadow-sm hover:shadow-md transition-all"
                 >
                   <ShieldCheck className="w-4 h-4" />
                   <span>Dashboard Superadmin</span>
@@ -110,9 +119,9 @@ export default function HomePage() {
                 </Link>
                 <Link
                   href="/scanner"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-750 text-slate-200 border border-slate-700 font-medium text-xs sm:text-sm rounded-lg transition-colors"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-semibold text-xs sm:text-sm rounded-lg shadow-2xs hover:shadow-xs transition-all"
                 >
-                  <QrCode className="w-4 h-4 text-emerald-400" />
+                  <QrCode className="w-4 h-4 text-uin-primary" />
                   <span>Scanner Lorong</span>
                 </Link>
               </>
@@ -123,7 +132,7 @@ export default function HomePage() {
               <>
                 <Link
                   href="/daftar"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-uin-primary hover:bg-uin-secondary text-white font-semibold text-xs sm:text-sm rounded-lg shadow-xs transition-colors"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-uin-primary hover:bg-uin-secondary text-white font-bold text-xs sm:text-sm rounded-lg shadow-sm hover:shadow-md transition-all"
                 >
                   <BedDouble className="w-4 h-4" />
                   <span>Pilih Kamar &amp; Ranjang</span>
@@ -131,9 +140,9 @@ export default function HomePage() {
                 </Link>
                 <Link
                   href="/tiket"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-750 text-slate-200 border border-slate-700 font-medium text-xs sm:text-sm rounded-lg transition-colors"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-semibold text-xs sm:text-sm rounded-lg shadow-2xs hover:shadow-xs transition-all"
                 >
-                  <QrCode className="w-4 h-4 text-emerald-400" />
+                  <QrCode className="w-4 h-4 text-uin-primary" />
                   <span>Lihat E-Tiket Saya</span>
                 </Link>
               </>
@@ -144,7 +153,7 @@ export default function HomePage() {
               <>
                 <Link
                   href="/login"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-uin-primary hover:bg-uin-secondary text-white font-semibold text-xs sm:text-sm rounded-lg shadow-xs transition-colors"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-uin-primary hover:bg-uin-secondary text-white font-bold text-xs sm:text-sm rounded-lg shadow-sm hover:shadow-md transition-all"
                 >
                   <LogIn className="w-4 h-4" />
                   <span>Masuk Akun / Aktivasi PIN</span>
@@ -152,9 +161,9 @@ export default function HomePage() {
                 </Link>
                 <Link
                   href="/daftar"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-750 text-slate-200 border border-slate-700 font-medium text-xs sm:text-sm rounded-lg transition-colors"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-semibold text-xs sm:text-sm rounded-lg shadow-2xs hover:shadow-xs transition-all"
                 >
-                  <BedDouble className="w-4 h-4 text-emerald-400" />
+                  <BedDouble className="w-4 h-4 text-uin-primary" />
                   <span>Pilih Kamar</span>
                 </Link>
               </>
@@ -162,24 +171,28 @@ export default function HomePage() {
 
           </div>
 
-          {/* Live Occupancy Metric Bar */}
-          <div className="pt-6 max-w-3xl mx-auto">
-            <div className="bg-slate-800/80 rounded-lg p-3.5 sm:p-4 border border-slate-700 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-              <div>
-                <span className="text-[11px] text-slate-400 block uppercase font-medium">Total Kamar</span>
-                <span className="text-lg sm:text-xl font-bold font-mono text-white">{rooms.length}</span>
+          {/* Elevated Live Occupancy Metric Bar */}
+          <div className="pt-4 max-w-3xl mx-auto">
+            <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-sm grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-0 sm:divide-x divide-slate-100 text-center">
+              <div className="px-2 py-1">
+                <span className="text-xs text-slate-500 font-medium block">Total Kamar</span>
+                <span className="text-xl sm:text-2xl font-extrabold text-slate-900 tabular-nums">{rooms.length}</span>
+                <span className="text-[11px] text-slate-400 block mt-0.5">Jadid &amp; Qodim</span>
               </div>
-              <div>
-                <span className="text-[11px] text-slate-400 block uppercase font-medium">Total Kapasitas</span>
-                <span className="text-lg sm:text-xl font-bold font-mono text-white">{totalKapasitas} Bed</span>
+              <div className="px-2 py-1">
+                <span className="text-xs text-slate-500 font-medium block">Total Kapasitas</span>
+                <span className="text-xl sm:text-2xl font-extrabold text-slate-900 tabular-nums">{totalKapasitas}</span>
+                <span className="text-[11px] text-slate-400 block mt-0.5">Kasur Asrama</span>
               </div>
-              <div>
-                <span className="text-[11px] text-slate-400 block uppercase font-medium">Sisa Tersedia</span>
-                <span className="text-lg sm:text-xl font-bold font-mono text-emerald-400">{sisaSlot} Bed</span>
+              <div className="px-2 py-1">
+                <span className="text-xs text-slate-500 font-medium block">Sisa Tersedia</span>
+                <span className="text-xl sm:text-2xl font-extrabold text-uin-primary tabular-nums">{sisaSlot}</span>
+                <span className="text-[11px] text-emerald-600 font-medium block mt-0.5">Kasur Kosong</span>
               </div>
-              <div>
-                <span className="text-[11px] text-slate-400 block uppercase font-medium">Sudah Check-In</span>
-                <span className="text-lg sm:text-xl font-bold font-mono text-slate-200">{totalCheckedIn} Santri</span>
+              <div className="px-2 py-1">
+                <span className="text-xs text-slate-500 font-medium block">Sudah Check-In</span>
+                <span className="text-xl sm:text-2xl font-extrabold text-slate-800 tabular-nums">{totalCheckedIn}</span>
+                <span className="text-[11px] text-slate-400 block mt-0.5">Santri Tiba</span>
               </div>
             </div>
           </div>
@@ -187,100 +200,111 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Alur Kerja Check-In */}
+      {/* ======================================================== */}
+      {/* 2. Alur Pelaksanaan Tahapan Check-In                     */}
+      {/* ======================================================== */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="text-center space-y-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-uin-secondary">Alur Pelaksanaan</span>
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+        <div className="text-center space-y-1.5">
+          <span className="text-xs font-bold uppercase tracking-wider text-uin-primary bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200/80 inline-block">
+            Alur Pelaksanaan
+          </span>
+          <h2 className="text-xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
             Tahapan Check-In Digital Mahasantri
           </h2>
-          <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto">
-            Seluruh tahapan dilakukan secara mandiri dan desentralisasi per lorong kamar.
+          <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto font-normal">
+            Seluruh tahapan dilakukan secara mandiri dan desentralisasi per lorong kamar lantai.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-lg p-5 border border-slate-200 shadow-xs space-y-2.5">
-            <div className="w-8 h-8 rounded-md bg-emerald-50 text-uin-primary border border-emerald-100 flex items-center justify-center font-bold text-sm">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200/80 shadow-2xs hover:shadow-sm transition-all space-y-3">
+            <div className="w-9 h-9 rounded-lg bg-emerald-50 text-uin-primary border border-emerald-100 flex items-center justify-center font-extrabold text-sm">
               1
             </div>
-            <h3 className="font-semibold text-sm text-slate-900">Verifikasi &amp; Pilih Kamar</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Mahasantri mengamankan akun dengan PIN 6 digit, lalu memilih posisi kamar dan kasur pada denah lantai secara visual.
+            <h3 className="font-bold text-sm sm:text-base text-slate-900">Verifikasi &amp; Pilih Kamar</h3>
+            <p className="text-xs text-slate-600 leading-relaxed font-normal">
+              Mahasantri mengamankan akun dengan PIN 6 digit, lalu memilih posisi kamar dan kasur pada denah lantai secara visual interaktif.
             </p>
           </div>
 
-          <div className="bg-white rounded-lg p-5 border border-slate-200 shadow-xs space-y-2.5">
-            <div className="w-8 h-8 rounded-md bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center font-bold text-sm">
+          <div className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200/80 shadow-2xs hover:shadow-sm transition-all space-y-3">
+            <div className="w-9 h-9 rounded-lg bg-emerald-50 text-uin-primary border border-emerald-100 flex items-center justify-center font-extrabold text-sm">
               2
             </div>
-            <h3 className="font-semibold text-sm text-slate-900">Penerbitan E-Tiket Barcode</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Sistem menerbitkan kartu check-in digital dengan QR Code unik, nomor kasur, dan identitas resmi untuk disimpan di HP.
+            <h3 className="font-bold text-sm sm:text-base text-slate-900">Penerbitan E-Tiket Barcode</h3>
+            <p className="text-xs text-slate-600 leading-relaxed font-normal">
+              Sistem menerbitkan kartu check-in digital dengan QR Code unik, nomor kasur, dan identitas resmi untuk disimpan di ponsel santri.
             </p>
           </div>
 
-          <div className="bg-white rounded-lg p-5 border border-slate-200 shadow-xs space-y-2.5">
-            <div className="w-8 h-8 rounded-md bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center font-bold text-sm">
+          <div className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200/80 shadow-2xs hover:shadow-sm transition-all space-y-3">
+            <div className="w-9 h-9 rounded-lg bg-emerald-50 text-uin-primary border border-emerald-100 flex items-center justify-center font-extrabold text-sm">
               3
             </div>
-            <h3 className="font-semibold text-sm text-slate-900">Verifikasi Hari-H &amp; Kunci</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Pada hari kedatangan (19–21 Agustus 2026), santri langsung menuju kamar lantai masing-masing untuk pemindaian barcode pengurus.
+            <h3 className="font-bold text-sm sm:text-base text-slate-900">Verifikasi Hari-H &amp; Kunci</h3>
+            <p className="text-xs text-slate-600 leading-relaxed font-normal">
+              Pada hari kedatangan (19–21 Agustus 2026), santri langsung menuju lorong lantai masing-masing untuk pemindaian barcode oleh pengurus.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Ketentuan Kedatangan Berdasarkan SK */}
+      {/* ======================================================== */}
+      {/* 3. Ketentuan Kedatangan Resmi Berdasarkan SK              */}
+      {/* ======================================================== */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-slate-900 text-white rounded-xl p-5 sm:p-7 border border-slate-800 shadow-xs">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+        <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 text-white rounded-2xl p-6 sm:p-8 border border-slate-800 shadow-md relative overflow-hidden">
+          {/* Subtle Accent Glow */}
+          <div className="absolute right-0 top-0 w-80 h-80 bg-emerald-950/40 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             
-            <div className="space-y-3">
+            <div className="space-y-4">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5" />
                 Jadwal Kedatangan: {SK_INFO.jadwal}
               </span>
-              <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
                 Ketentuan Kedatangan Resmi Ma&apos;had
               </h3>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                Check-in dibuka pada tanggal <strong>19 – 21 Agustus 2026</strong>. Santri dengan domisili luar provinsi atau keperluan khusus dapat berkoordinasi dengan Helpdesk ({SK_INFO.contactPerson}).
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
+                Check-in dibuka pada tanggal <strong>19 – 21 Agustus 2026</strong>. Santri dengan domisili luar provinsi atau keperluan khusus dapat berkoordinasi langsung dengan Helpdesk ({SK_INFO.contactPerson}).
               </p>
 
-              <div className="space-y-1.5 pt-1 text-xs text-slate-300">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <div className="space-y-2 pt-1 text-xs text-slate-300">
+                <div className="flex items-center gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                   <span>Gedung Jadid: Alokasi Putra (Kamar 09-16) &bull; Putri (Kamar 01-08 &amp; 17-24)</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <div className="flex items-center gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                   <span>Gedung Qodim: Alokasi Khusus Mahasantri Putri (Kamar 01-24)</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <div className="flex items-center gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                   <span>Lantai 2: Alokasi Khusus Mahasantri Internasional</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <div className="flex items-center gap-2.5">
+                  <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
                   <span>Sekretariat Ma&apos;had: {SK_INFO.contactPerson}</span>
                 </div>
               </div>
             </div>
 
-            {/* Quick Access Box */}
-            <div className="bg-slate-800/80 rounded-lg p-5 border border-slate-700 space-y-3 text-center">
+            {/* Quick Access Portal Box */}
+            <div className="bg-slate-800/70 backdrop-blur-xs rounded-xl p-6 border border-slate-700/80 space-y-3.5 text-center shadow-xs">
               {session?.role === 'PENGURUS' ? (
                 <>
-                  <QrCode className="w-8 h-8 text-emerald-400 mx-auto" />
-                  <h4 className="font-semibold text-sm text-white">Scanner Pengurus Lantai {session.floorAssigned}</h4>
-                  <p className="text-xs text-slate-400">
-                    Gunakan kamera HP untuk memindai E-Tiket mahasantri di meja lorong lantai Anda.
+                  <div className="w-12 h-12 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+                    <QrCode className="w-6 h-6" />
+                  </div>
+                  <h4 className="font-bold text-base text-white">Scanner Pengurus Lantai {session.floorAssigned}</h4>
+                  <p className="text-xs text-slate-300 font-normal">
+                    Gunakan kamera ponsel untuk memindai E-Tiket mahasantri di meja lorong lantai Anda.
                   </p>
                   <Link
                     href="/scanner"
-                    className="inline-flex items-center justify-center gap-2 w-full px-4 py-2 bg-uin-primary hover:bg-uin-secondary text-white font-semibold text-xs rounded-lg shadow-xs transition-colors"
+                    className="inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-uin-primary hover:bg-uin-secondary text-white font-semibold text-xs sm:text-sm rounded-lg shadow-xs transition-colors"
                   >
                     <QrCode className="w-4 h-4" />
                     <span>Buka Scanner Kamera</span>
@@ -288,14 +312,16 @@ export default function HomePage() {
                 </>
               ) : session?.role === 'ADMIN' ? (
                 <>
-                  <ShieldCheck className="w-8 h-8 text-emerald-400 mx-auto" />
-                  <h4 className="font-semibold text-sm text-white">Panel Kontrol Superadmin</h4>
-                  <p className="text-xs text-slate-400">
+                  <div className="w-12 h-12 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+                    <ShieldCheck className="w-6 h-6" />
+                  </div>
+                  <h4 className="font-bold text-base text-white">Panel Kontrol Superadmin</h4>
+                  <p className="text-xs text-slate-300 font-normal">
                     Kelola data SK Mahasantri, upload PDF lampiran, dan konfigurasi kamar asrama.
                   </p>
                   <Link
                     href="/admin"
-                    className="inline-flex items-center justify-center gap-2 w-full px-4 py-2 bg-uin-primary hover:bg-uin-secondary text-white font-semibold text-xs rounded-lg shadow-xs transition-colors"
+                    className="inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-uin-primary hover:bg-uin-secondary text-white font-semibold text-xs sm:text-sm rounded-lg shadow-xs transition-colors"
                   >
                     <ShieldCheck className="w-4 h-4" />
                     <span>Buka Dashboard Superadmin</span>
@@ -303,14 +329,16 @@ export default function HomePage() {
                 </>
               ) : (
                 <>
-                  <KeyRound className="w-8 h-8 text-emerald-400 mx-auto" />
-                  <h4 className="font-semibold text-sm text-white">Portal Masuk Petugas &amp; Admin</h4>
-                  <p className="text-xs text-slate-400">
+                  <div className="w-12 h-12 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+                    <KeyRound className="w-6 h-6" />
+                  </div>
+                  <h4 className="font-bold text-base text-white">Portal Masuk Petugas &amp; Admin</h4>
+                  <p className="text-xs text-slate-300 font-normal">
                     Pengurus lorong lantai dan pengelola asrama dapat masuk menggunakan kredensial resmi.
                   </p>
                   <Link
                     href="/login"
-                    className="inline-flex items-center justify-center gap-2 w-full px-4 py-2 bg-uin-primary hover:bg-uin-secondary text-white font-semibold text-xs rounded-lg shadow-xs transition-colors"
+                    className="inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-uin-primary hover:bg-uin-secondary text-white font-semibold text-xs sm:text-sm rounded-lg shadow-xs transition-colors"
                   >
                     <LogIn className="w-4 h-4" />
                     <span>Masuk Portal Petugas / Admin</span>

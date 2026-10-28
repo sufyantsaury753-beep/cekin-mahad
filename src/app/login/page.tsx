@@ -215,92 +215,98 @@ function LoginForm() {
   };
 
   return (
-    <div className="max-w-md mx-auto px-4 py-8 sm:py-12 space-y-6">
-      
-      {/* Header Title */}
-      <div className="text-center space-y-2">
-        <div className="w-10 h-10 bg-emerald-50 text-uin-primary border border-emerald-100 rounded-lg flex items-center justify-center mx-auto shadow-xs">
-          <KeyRound className="w-5 h-5" />
-        </div>
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-          Portal Masuk Sistem Ma&apos;had
-        </h1>
-        <p className="text-xs text-slate-500 max-w-sm mx-auto">
-          Pilih jenis akun Anda untuk mengakses sistem check-in &amp; manajemen asrama UIN Siber Syekh Nurjati Cirebon.
-        </p>
-      </div>
+    <div className="min-h-[calc(100vh-140px)] flex flex-col justify-center items-center py-10 px-4 bg-gradient-to-b from-emerald-50/50 via-slate-50/30 to-white relative overflow-hidden">
+      {/* Soft Ambient Background Glow */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-full max-w-2xl h-64 bg-radial from-emerald-100/50 to-transparent blur-3xl pointer-events-none -z-0"></div>
 
-      {/* Role Selection Tabs */}
-      <div className="grid grid-cols-3 p-1 bg-slate-100 rounded-lg border border-slate-200 gap-1 text-xs font-semibold">
-        <button
-          type="button"
-          onClick={() => {
-            setActiveRole('MAHASANTRI');
-            setError(null);
-          }}
-          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md transition-colors ${
-            activeRole === 'MAHASANTRI'
-              ? 'bg-white text-slate-900 shadow-xs'
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <User className="w-3.5 h-3.5" />
-          <span>Mahasantri</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setActiveRole('PENGURUS');
-            setPgrPassword('');
-            setError(null);
-          }}
-          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md transition-colors ${
-            activeRole === 'PENGURUS'
-              ? 'bg-white text-slate-900 shadow-xs'
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <QrCode className="w-3.5 h-3.5" />
-          <span>Pengurus</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            setActiveRole('ADMIN');
-            setAdmEmail('');
-            setAdmPassword('');
-            setError(null);
-          }}
-          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md transition-colors ${
-            activeRole === 'ADMIN'
-              ? 'bg-white text-slate-900 shadow-xs'
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <ShieldCheck className="w-3.5 h-3.5" />
-          <span>Admin</span>
-        </button>
-      </div>
-
-      {/* Main Login Box */}
-      <div className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
+      <div className="relative z-10 max-w-[440px] w-full space-y-5">
         
-        {/* Error Alert */}
-        {error && (
-          <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg flex items-start gap-2.5 text-rose-800 text-xs">
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-            <div className="flex-1 font-medium">{error}</div>
-          </div>
-        )}
+        {/* Main Login Card */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 sm:p-8 space-y-5 relative overflow-hidden">
+          {/* Top Green Accent Stripe */}
+          <div className="h-1.5 w-full bg-gradient-to-r from-uin-primary via-emerald-600 to-teal-500 absolute top-0 left-0"></div>
 
-        {/* Success Alert */}
-        {successMsg && (
-          <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-lg flex items-center gap-2.5 text-emerald-900 text-xs font-semibold">
-            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-            <div className="flex-1">{successMsg}</div>
+          {/* Header Title */}
+          <div className="text-center space-y-1.5 pt-1">
+            <div className="w-12 h-12 bg-emerald-50 text-uin-primary border border-emerald-200/80 rounded-xl flex items-center justify-center mx-auto shadow-2xs">
+              <KeyRound className="w-6 h-6" />
+            </div>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+              Portal Masuk Sistem Ma&apos;had
+            </h1>
+            <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed font-normal">
+              Pilih peran Anda untuk mengakses sistem check-in &amp; penempatan asrama resmi.
+            </p>
           </div>
-        )}
+
+          {/* Role Selection Tabs */}
+          <div className="grid grid-cols-3 p-1 bg-slate-100/80 rounded-lg border border-slate-200 gap-1 text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveRole('MAHASANTRI');
+                setError(null);
+              }}
+              className={`flex items-center justify-center gap-1.5 py-2 rounded-md transition-all ${
+                activeRole === 'MAHASANTRI'
+                  ? 'bg-white text-uin-primary shadow-xs border border-slate-200/80 font-bold'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>Mahasantri</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveRole('PENGURUS');
+                setPgrPassword('');
+                setError(null);
+              }}
+              className={`flex items-center justify-center gap-1.5 py-2 rounded-md transition-all ${
+                activeRole === 'PENGURUS'
+                  ? 'bg-white text-uin-primary shadow-xs border border-slate-200/80 font-bold'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <QrCode className="w-3.5 h-3.5" />
+              <span>Pengurus</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setActiveRole('ADMIN');
+                setAdmEmail('');
+                setAdmPassword('');
+                setError(null);
+              }}
+              className={`flex items-center justify-center gap-1.5 py-2 rounded-md transition-all ${
+                activeRole === 'ADMIN'
+                  ? 'bg-white text-uin-primary shadow-xs border border-slate-200/80 font-bold'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Admin</span>
+            </button>
+          </div>
+
+          {/* Error Alert */}
+          {error && (
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg flex items-start gap-2.5 text-rose-800 text-xs">
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+              <div className="flex-1 font-medium">{error}</div>
+            </div>
+          )}
+
+          {/* Success Alert */}
+          {successMsg && (
+            <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-lg flex items-center gap-2.5 text-emerald-900 text-xs font-semibold">
+              <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+              <div className="flex-1">{successMsg}</div>
+            </div>
+          )}
 
         {/* TAB 1: MAHASANTRI LOGIN */}
         {activeRole === 'MAHASANTRI' && (
@@ -642,14 +648,20 @@ function LoginForm() {
           </form>
         )}
 
-      </div>
+          {/* Security & Official Notice */}
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-center gap-1.5 text-[11px] text-slate-400 font-medium">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Enkripsi PIN &amp; Verifikasi SK Resmi UIN Siber Cirebon</span>
+          </div>
+        </div>
 
-      {/* Info Helpdesk */}
-      <div className="text-center text-xs text-slate-500 space-y-0.5">
-        <p>Bantuan teknis atau kendala verifikasi identitas:</p>
-        <p>Sekretariat Ma&apos;had: <strong className="text-slate-700 font-semibold">{SK_INFO.contactPerson}</strong></p>
-      </div>
+        {/* Info Helpdesk */}
+        <div className="text-center text-xs text-slate-500 space-y-0.5">
+          <p>Bantuan teknis atau kendala verifikasi identitas:</p>
+          <p>Sekretariat Ma&apos;had: <strong className="text-slate-700 font-semibold">{SK_INFO.contactPerson}</strong></p>
+        </div>
 
+      </div>
     </div>
   );
 }
